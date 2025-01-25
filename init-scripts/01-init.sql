@@ -6,6 +6,7 @@ CREATE TYPE user_role AS ENUM ('admin', 'seller', 'customer');
 CREATE TYPE seller_status AS ENUM ('active', 'pending', 'suspended');
 CREATE TYPE product_status AS ENUM ('active', 'inactive', 'out_of_stock');
 CREATE TYPE comment_status AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE comment_parent_type AS ENUM ('blog', 'product');
 
 -- Create Users table
 CREATE TABLE users (
@@ -109,12 +110,20 @@ CREATE TABLE blogs (
 CREATE TABLE comments (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id uuid REFERENCES users(id) ON DELETE SET NULL,
-    blog_id uuid REFERENCES blogs(id) ON DELETE CASCADE,
+    parent_type comment_parent_type NOT NULL,
+    parent_id uuid NOT NULL,
     content TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
     status comment_status DEFAULT 'pending',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE products
+ADD COLUMN average_rating DECIMAL(3,2) DEFAULT 0.0;
+
+ALTER TABLE blogs
+ADD COLUMN average_rating DECIMAL(3,2) DEFAULT 0.0;
 
 -- Create Email Verification Codes table
 CREATE TABLE email_verifications (
@@ -154,11 +163,57 @@ CREATE INDEX idx_products_seller ON products(seller_id);
 CREATE INDEX idx_product_categories_product ON product_categories(product_id);
 CREATE INDEX idx_product_categories_category ON product_categories(category_id);
 CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);
-CREATE INDEX idx_comments_blog ON comments(blog_id);
+CREATE INDEX idx_comments_parent ON comments(parent_type, parent_id);
 CREATE INDEX idx_product_images_product ON product_images(product_id);
 CREATE INDEX idx_email_verifications_user ON email_verifications(user_id);
 CREATE INDEX idx_email_verifications_code ON email_verifications(verification_code);
 CREATE INDEX idx_addresses_user_id ON addresses(user_id);
+
+-- Create triggers for checking parent existence in comments
+CREATE OR REPLACE FUNCTION check_comment_parent() RETURNS trigger AS $$
+BEGIN
+    IF NEW.parent_type = 'blog' THEN
+        IF NOT EXISTS (SELECT 1 FROM blogs WHERE id = NEW.parent_id) THEN
+            RAISE EXCEPTION 'Referenced blog does not exist';
+        END IF;
+    ELSIF NEW.parent_type = 'product' THEN
+        IF NOT EXISTS (SELECT 1 FROM products WHERE id = NEW.parent_id) THEN
+            RAISE EXCEPTION 'Referenced product does not exist';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+-- Create function to update average ratings
+CREATE OR REPLACE FUNCTION update_average_rating() RETURNS trigger AS $$
+BEGIN
+    IF NEW.parent_type = 'product' THEN
+        -- Update product's average rating
+        UPDATE products
+        SET average_rating = (
+            SELECT COALESCE(AVG(rating)::DECIMAL(3,2), 0.0)
+            FROM comments
+            WHERE parent_type = 'product' 
+            AND parent_id = NEW.parent_id
+            AND status = 'approved'
+        )
+        WHERE id = NEW.parent_id;
+    ELSIF NEW.parent_type = 'blog' THEN
+        -- Update blog's average rating
+        UPDATE blogs
+        SET average_rating = (
+            SELECT COALESCE(AVG(rating)::DECIMAL(3,2), 0.0)
+            FROM comments
+            WHERE parent_type = 'blog' 
+            AND parent_id = NEW.parent_id
+            AND status = 'approved'
+        )
+        WHERE id = NEW.parent_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
 
 -- Create updated_at triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -194,6 +249,21 @@ CREATE TRIGGER update_blogs_updated_at
     BEFORE UPDATE ON blogs
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_comments_updated_at
+    BEFORE UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER check_comment_parent_trigger
+    BEFORE INSERT OR UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION check_comment_parent();
+
+CREATE TRIGGER update_average_rating_trigger
+    AFTER INSERT OR UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_average_rating();
 
 -- Insert default admin user
 INSERT INTO users (

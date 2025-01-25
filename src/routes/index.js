@@ -9,5 +9,6 @@ router.use("/sellers", require("./sellerRoutes"));
 router.use("/orders", require("./orderRoutes"));
 router.use("/cart", require("./cartRoutes"));
 router.use("/blogs", require("./blogRoutes"));
+router.use("/comments", require("./commentRoutes"));
 
 module.exports = router;
