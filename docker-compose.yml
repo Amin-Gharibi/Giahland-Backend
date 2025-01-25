@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+    # PostgreSQL Database
+    postgres:
+        image: postgres:16-alpine
+        container_name: giahland_db
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${DB_USER:-giahland_user}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-your_secure_password}
+            POSTGRES_DB: ${DB_NAME:-giahland_db}
+            PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+            - "${DB_PORT:-5432}:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ./init-scripts:/docker-entrypoint-initdb.d
+        networks:
+            - giahland_network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-giahland_user} -d ${DB_NAME:-giahland_db}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    # pgAdmin for database management (optional, recommended for development)
+    pgadmin:
+        image: dpage/pgadmin4:latest
+        container_name: giahland_pgadmin
+        restart: unless-stopped
+        environment:
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@giahland.com}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
+            PGADMIN_CONFIG_SERVER_MODE: "False"
+        ports:
+            - "${PGADMIN_PORT:-5050}:80"
+        volumes:
+            - pgadmin_data:/var/lib/pgadmin
+        networks:
+            - giahland_network
+        depends_on:
+            - postgres
+
+networks:
+    giahland_network:
+        driver: bridge
+
+volumes:
+    postgres_data:
+        driver: local
+    pgadmin_data:
+        driver: local
