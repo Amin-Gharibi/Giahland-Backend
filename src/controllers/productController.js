@@ -1,6 +1,5 @@
 const pool = require("../config/database");
 const { APIError } = require("../middlewares/errorHandler");
-
 exports.getProducts = async (req, res, next) => {
 	try {
 		const { page = 1, limit = 10, category, minPrice, maxPrice, sortBy = "created_at", order = "DESC" } = req.query;
@@ -13,7 +12,10 @@ exports.getProducts = async (req, res, next) => {
 		// Add category filter
 		if (category) {
 			params.push(category);
-			whereClause += ` AND p.category_id = $${params.length}`;
+			whereClause += ` AND EXISTS (
+                SELECT 1 FROM product_categories pc 
+                WHERE pc.product_id = p.id AND pc.category_id = $${params.length}
+            )`;
 		}
 
 		// Add price range filter
@@ -39,7 +41,7 @@ exports.getProducts = async (req, res, next) => {
 
 		// Get total count for pagination
 		const countQuery = `
-            SELECT COUNT(*) 
+            SELECT COUNT(DISTINCT p.id) 
             FROM products p 
             ${whereClause}
         `;
@@ -56,31 +58,45 @@ exports.getProducts = async (req, res, next) => {
                 p.status,
                 p.created_at,
                 p.updated_at,
-                c.fa_name as category_name,
-                c.en_name as category_name_en,
                 s.shop_name as seller_name,
                 s.rating as seller_rating,
                 (
-                    SELECT json_agg(json_build_object(
-                        'id', pi.id,
-                        'image_url', pi.image_url,
-                        'is_main', pi.is_main
-                    ))
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', pi.id,
+                            'image_url', pi.image_url,
+                            'is_main', pi.is_main
+                        )
+                    )
                     FROM product_images pi
                     WHERE pi.product_id = p.id
                 ) as images,
                 (
-                    SELECT json_agg(json_build_object(
-                        'name', pf.name,
-                        'value', pf.value
-                    ))
+                    SELECT json_agg(
+                        json_build_object(
+                            'name', pf.name,
+                            'value', pf.value
+                        )
+                    )
                     FROM product_features pf
                     WHERE pf.product_id = p.id
                 ) as features
             FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
             LEFT JOIN sellers s ON p.seller_id = s.id
             ${whereClause}
+            GROUP BY p.id, s.shop_name, s.rating
             ORDER BY p.${sortBy} ${order}
             LIMIT $${params.length + 1} OFFSET $${params.length + 2}
         `;
@@ -117,31 +133,45 @@ exports.getProductById = async (req, res, next) => {
                 p.status,
                 p.created_at,
                 p.updated_at,
-                c.fa_name as category_name,
-                c.en_name as category_name_en,
                 s.shop_name as seller_name,
                 s.rating as seller_rating,
                 (
-                    SELECT json_agg(json_build_object(
-                        'id', pi.id,
-                        'image_url', pi.image_url,
-                        'is_main', pi.is_main
-                    ))
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', pi.id,
+                            'image_url', pi.image_url,
+                            'is_main', pi.is_main
+                        )
+                    )
                     FROM product_images pi
                     WHERE pi.product_id = p.id
                 ) as images,
                 (
-                    SELECT json_agg(json_build_object(
-                        'name', pf.name,
-                        'value', pf.value
-                    ))
+                    SELECT json_agg(
+                        json_build_object(
+                            'name', pf.name,
+                            'value', pf.value
+                        )
+                    )
                     FROM product_features pf
                     WHERE pf.product_id = p.id
                 ) as features
             FROM products p
-            LEFT JOIN categories c ON p.category_id = c.id
             LEFT JOIN sellers s ON p.seller_id = s.id
             WHERE p.id = $1
+            GROUP BY p.id, s.shop_name, s.rating
         `;
 
 		const result = await pool.query(query, [req.params.id]);
@@ -160,7 +190,7 @@ exports.getProductById = async (req, res, next) => {
 };
 
 exports.createProduct = async (req, res, next) => {
-	const { name, price, description, categoryId, stock, features } = req.body;
+	const { name, price, description, categories, stock, features } = req.body;
 
 	try {
 		// Start transaction
@@ -176,22 +206,31 @@ exports.createProduct = async (req, res, next) => {
 		// Create product
 		const productResult = await pool.query(
 			`INSERT INTO products (
-                seller_id, 
-                category_id, 
-                name, 
-                price, 
+                seller_id,
+                name,
+                price,
                 description,
                 stock,
                 status
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *`,
-			[sellerResult.rows[0].id, categoryId, name, price, description, stock, "active"]
+			[sellerResult.rows[0].id, name, price, description, stock, "active"]
 		);
+
+		// Add categories
+		if (categories && categories.length > 0) {
+			const categoryValues = categories.map((categoryId) => `('${productResult.rows[0].id}', '${categoryId}')`).join(",");
+
+			await pool.query(`
+                INSERT INTO product_categories (product_id, category_id)
+                VALUES ${categoryValues}
+            `);
+		}
 
 		// Add features if provided
 		if (features && features.length > 0) {
-			const featureValues = features.map((feature) => `(${productResult.rows[0].id}, ${feature.name}, ${feature.value})`).join(",");
+			const featureValues = features.map((feature) => `('${productResult.rows[0].id}', '${feature.name}', '${feature.value}')`).join(",");
 
 			await pool.query(`
                 INSERT INTO product_features (product_id, name, value)
@@ -199,12 +238,35 @@ exports.createProduct = async (req, res, next) => {
             `);
 		}
 
+		// Fetch complete product with categories
+		const result = await pool.query(
+			`
+            SELECT 
+                p.*,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories
+            FROM products p
+            WHERE p.id = $1
+        `,
+			[productResult.rows[0].id]
+		);
+
 		// Commit transaction
 		await pool.query("COMMIT");
 
 		res.status(201).json({
 			success: true,
-			data: productResult.rows[0],
+			data: result.rows[0],
 		});
 	} catch (error) {
 		await pool.query("ROLLBACK");
@@ -213,7 +275,7 @@ exports.createProduct = async (req, res, next) => {
 };
 
 exports.updateProduct = async (req, res, next) => {
-	const { name, price, description, categoryId, stock, status, features } = req.body;
+	const { name, price, description, categories, stock, status, features } = req.body;
 
 	try {
 		// Start transaction
@@ -252,11 +314,6 @@ exports.updateProduct = async (req, res, next) => {
 			updateValues.push(description);
 			valueCount++;
 		}
-		if (categoryId !== undefined) {
-			updateFields.push(`category_id = $${valueCount}`);
-			updateValues.push(categoryId);
-			valueCount++;
-		}
 		if (stock !== undefined) {
 			updateFields.push(`stock = $${valueCount}`);
 			updateValues.push(stock);
@@ -278,6 +335,22 @@ exports.updateProduct = async (req, res, next) => {
 			[...updateValues, req.params.id]
 		);
 
+		// Update categories if provided
+		if (categories) {
+			// Delete existing categories
+			await pool.query("DELETE FROM product_categories WHERE product_id = $1", [req.params.id]);
+
+			// Add new categories
+			if (categories.length > 0) {
+				const categoryValues = categories.map((categoryId) => `('${req.params.id}', '${categoryId}')`).join(",");
+
+				await pool.query(`
+                    INSERT INTO product_categories (product_id, category_id)
+                    VALUES ${categoryValues}
+                `);
+			}
+		}
+
 		// Update features if provided
 		if (features) {
 			// Delete existing features
@@ -285,7 +358,7 @@ exports.updateProduct = async (req, res, next) => {
 
 			// Add new features
 			if (features.length > 0) {
-				const featureValues = features.map((feature) => `(${req.params.id}, ${feature.name}, ${feature.value})`).join(",");
+				const featureValues = features.map((feature) => `('${req.params.id}', '${feature.name}', '${feature.value}')`).join(",");
 
 				await pool.query(`
                     INSERT INTO product_features (product_id, name, value)
@@ -294,12 +367,35 @@ exports.updateProduct = async (req, res, next) => {
 			}
 		}
 
+		// Fetch updated product with categories
+		const result = await pool.query(
+			`
+            SELECT 
+                p.*,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories
+            FROM products p
+            WHERE p.id = $1
+        `,
+			[req.params.id]
+		);
+
 		// Commit transaction
 		await pool.query("COMMIT");
 
 		res.json({
 			success: true,
-			data: productResult.rows[0],
+			data: result.rows[0],
 		});
 	} catch (error) {
 		await pool.query("ROLLBACK");
@@ -370,6 +466,7 @@ exports.uploadImages = async (req, res, next) => {
 		next(error);
 	}
 };
+
 exports.deleteImage = async (req, res, next) => {
 	try {
 		const { id, imageId } = req.params;
@@ -396,36 +493,57 @@ exports.deleteImage = async (req, res, next) => {
 
 exports.getFeaturedProducts = async (req, res, next) => {
 	try {
-		const result = await pool.query(
-			`SELECT p.*, 
-                    c.fa_name as category_name, 
-                    c.en_name as category_name_en, 
-                    s.shop_name as seller_name, 
-                    s.rating as seller_rating,
-                    (
-                        SELECT json_agg(json_build_object(
+		const result = await pool.query(`
+            SELECT 
+                p.id,
+                p.name,
+                p.price,
+                p.description,
+                p.stock,
+                p.status,
+                p.created_at,
+                p.updated_at,
+                s.shop_name as seller_name,
+                s.rating as seller_rating,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'id', pi.id,
                             'image_url', pi.image_url,
                             'is_main', pi.is_main
-                        ))
-                        FROM product_images pi
-                        WHERE pi.product_id = p.id
-                    ) as images,
-                    (
-                        SELECT json_agg(json_build_object(
+                        )
+                    )
+                    FROM product_images pi
+                    WHERE pi.product_id = p.id
+                ) as images,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'name', pf.name,
                             'value', pf.value
-                        ))
-                        FROM product_features pf
-                        WHERE pf.product_id = p.id
-                    ) as features
-             FROM products p
-             LEFT JOIN categories c ON p.category_id = c.id
-             LEFT JOIN sellers s ON p.seller_id = s.id
-             WHERE p.is_featured = TRUE AND p.status = 'active'
-             ORDER BY p.created_at DESC
-             LIMIT 10`
-		);
+                        )
+                    )
+                    FROM product_features pf
+                    WHERE pf.product_id = p.id
+                ) as features
+            FROM products p
+            LEFT JOIN sellers s ON p.seller_id = s.id
+            WHERE p.is_featured = TRUE AND p.status = 'active'
+            GROUP BY p.id, s.shop_name, s.rating
+            ORDER BY p.created_at DESC
+            LIMIT 10`);
 
 		res.json({
 			success: true,
@@ -438,36 +556,57 @@ exports.getFeaturedProducts = async (req, res, next) => {
 
 exports.getNewArrivals = async (req, res, next) => {
 	try {
-		const result = await pool.query(
-			`SELECT p.*, 
-                    c.fa_name as category_name, 
-                    c.en_name as category_name_en, 
-                    s.shop_name as seller_name, 
-                    s.rating as seller_rating,
-                    (
-                        SELECT json_agg(json_build_object(
+		const result = await pool.query(`
+            SELECT 
+                p.id,
+                p.name,
+                p.price,
+                p.description,
+                p.stock,
+                p.status,
+                p.created_at,
+                p.updated_at,
+                s.shop_name as seller_name,
+                s.rating as seller_rating,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'id', pi.id,
                             'image_url', pi.image_url,
                             'is_main', pi.is_main
-                        ))
-                        FROM product_images pi
-                        WHERE pi.product_id = p.id
-                    ) as images,
-                    (
-                        SELECT json_agg(json_build_object(
+                        )
+                    )
+                    FROM product_images pi
+                    WHERE pi.product_id = p.id
+                ) as images,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'name', pf.name,
                             'value', pf.value
-                        ))
-                        FROM product_features pf
-                        WHERE pf.product_id = p.id
-                    ) as features
-             FROM products p
-             LEFT JOIN categories c ON p.category_id = c.id
-             LEFT JOIN sellers s ON p.seller_id = s.id
-             WHERE p.status = 'active'
-             ORDER BY p.created_at DESC
-             LIMIT 10`
-		);
+                        )
+                    )
+                    FROM product_features pf
+                    WHERE pf.product_id = p.id
+                ) as features
+            FROM products p
+            LEFT JOIN sellers s ON p.seller_id = s.id
+            WHERE p.status = 'active'
+            GROUP BY p.id, s.shop_name, s.rating
+            ORDER BY p.created_at DESC
+            LIMIT 10`);
 
 		res.json({
 			success: true,
@@ -480,36 +619,57 @@ exports.getNewArrivals = async (req, res, next) => {
 
 exports.getBestSellers = async (req, res, next) => {
 	try {
-		const result = await pool.query(
-			`SELECT p.*, 
-                    c.fa_name as category_name, 
-                    c.en_name as category_name_en, 
-                    s.shop_name as seller_name, 
-                    s.rating as seller_rating,
-                    (
-                        SELECT json_agg(json_build_object(
+		const result = await pool.query(`
+            SELECT 
+                p.id,
+                p.name,
+                p.price,
+                p.description,
+                p.stock,
+                p.status,
+                p.created_at,
+                p.updated_at,
+                s.shop_name as seller_name,
+                s.rating as seller_rating,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'id', pi.id,
                             'image_url', pi.image_url,
                             'is_main', pi.is_main
-                        ))
-                        FROM product_images pi
-                        WHERE pi.product_id = p.id
-                    ) as images,
-                    (
-                        SELECT json_agg(json_build_object(
+                        )
+                    )
+                    FROM product_images pi
+                    WHERE pi.product_id = p.id
+                ) as images,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'name', pf.name,
                             'value', pf.value
-                        ))
-                        FROM product_features pf
-                        WHERE pf.product_id = p.id
-                    ) as features
-             FROM products p
-             LEFT JOIN categories c ON p.category_id = c.id
-             LEFT JOIN sellers s ON p.seller_id = s.id
-             WHERE p.is_best_seller = TRUE AND p.status = 'active'
-             ORDER BY p.created_at DESC
-             LIMIT 10`
-		);
+                        )
+                    )
+                    FROM product_features pf
+                    WHERE pf.product_id = p.id
+                ) as features
+            FROM products p
+            LEFT JOIN sellers s ON p.seller_id = s.id
+            WHERE p.is_best_seller = TRUE AND p.status = 'active'
+            GROUP BY p.id, s.shop_name, s.rating
+            ORDER BY p.created_at DESC
+            LIMIT 10`);
 
 		res.json({
 			success: true,
@@ -525,33 +685,61 @@ exports.getProductsByCategory = async (req, res, next) => {
 		const { categoryId } = req.params;
 
 		const result = await pool.query(
-			`SELECT p.*, 
-                    c.fa_name as category_name, 
-                    c.en_name as category_name_en, 
-                    s.shop_name as seller_name, 
-                    s.rating as seller_rating,
-                    (
-                        SELECT json_agg(json_build_object(
+			`
+            SELECT 
+                p.id,
+                p.name,
+                p.price,
+                p.description,
+                p.stock,
+                p.status,
+                p.created_at,
+                p.updated_at,
+                s.shop_name as seller_name,
+                s.rating as seller_rating,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', c.id,
+                            'fa_name', c.fa_name,
+                            'en_name', c.en_name
+                        )
+                    )
+                    FROM categories c
+                    JOIN product_categories pc ON c.id = pc.category_id
+                    WHERE pc.product_id = p.id
+                ) as categories,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'id', pi.id,
                             'image_url', pi.image_url,
                             'is_main', pi.is_main
-                        ))
-                        FROM product_images pi
-                        WHERE pi.product_id = p.id
-                    ) as images,
-                    (
-                        SELECT json_agg(json_build_object(
+                        )
+                    )
+                    FROM product_images pi
+                    WHERE pi.product_id = p.id
+                ) as images,
+                (
+                    SELECT json_agg(
+                        json_build_object(
                             'name', pf.name,
                             'value', pf.value
-                        ))
-                        FROM product_features pf
-                        WHERE pf.product_id = p.id
-                    ) as features
-             FROM products p
-             LEFT JOIN categories c ON p.category_id = c.id
-             LEFT JOIN sellers s ON p.seller_id = s.id
-             WHERE p.category_id = $1 AND p.status = 'active'
-             ORDER BY p.created_at DESC`,
+                        )
+                    )
+                    FROM product_features pf
+                    WHERE pf.product_id = p.id
+                ) as features
+            FROM products p
+            LEFT JOIN sellers s ON p.seller_id = s.id
+            WHERE p.id IN (
+                SELECT product_id 
+                FROM product_categories 
+                WHERE category_id = $1
+            )
+            AND p.status = 'active'
+            GROUP BY p.id, s.shop_name, s.rating
+            ORDER BY p.created_at DESC`,
 			[categoryId]
 		);
 

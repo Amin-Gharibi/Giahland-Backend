@@ -48,7 +48,6 @@ CREATE TABLE categories (
 CREATE TABLE products (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     seller_id uuid REFERENCES sellers(id) ON DELETE CASCADE,
-    category_id uuid REFERENCES categories(id),
     name VARCHAR(255) NOT NULL,
     price DECIMAL(12,2) NOT NULL,
     description TEXT,
@@ -127,10 +126,20 @@ CREATE TABLE email_verifications (
     attempts INTEGER DEFAULT 0
 );
 
+-- Create Product Categories table
+CREATE TABLE product_categories (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    product_id uuid REFERENCES products(id) ON DELETE CASCADE,
+    category_id uuid REFERENCES categories(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(product_id, category_id)
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_products_seller ON products(seller_id);
-CREATE INDEX idx_products_category ON products(category_id);
+CREATE INDEX idx_product_categories_product ON product_categories(product_id);
+CREATE INDEX idx_product_categories_category ON product_categories(category_id);
 CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);
 CREATE INDEX idx_comments_blog ON comments(blog_id);
 CREATE INDEX idx_product_images_product ON product_images(product_id);

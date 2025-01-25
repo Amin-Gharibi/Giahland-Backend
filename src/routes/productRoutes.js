@@ -21,7 +21,7 @@ router.use(authorize("seller"));
 router.post("/", validateRequest(productSchemas.create), productController.createProduct);
 router.put("/:id", validateRequest(productSchemas.update), productController.updateProduct);
 router.delete("/:id", productController.deleteProduct);
-router.post("/:id/images", upload.array("images", 5), productController.uploadImages);
+router.post("/:id/images", validateRequest(productSchemas.uploadImages), upload.array("images", 5), productController.uploadImages);
 router.delete("/:id/images/:imageId", productController.deleteImage);
 
 module.exports = router;
