@@ -3,13 +3,10 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
-const {errorHandler, notFound} = require("./middlewares/errorHandler");
+const {errorHandler} = require("./middlewares/errorHandler");
 
 // Import routes
-const userRoutes = require("./routes/user");
-const productRoutes = require("./routes/product");
-const sellerRoutes = require("./routes/seller");
-const blogRoutes = require("./routes/blog");
+const indexRoutes = require("./routes/index");
 
 const app = express();
 
@@ -27,13 +24,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Routes
-app.use("/api/users", userRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/sellers", sellerRoutes);
-app.use("/api/blogs", blogRoutes);
-
-// Handle 404 errors
-app.use(notFound);
+app.use("/api", indexRoutes);
 
 // Error handling
 app.use(errorHandler);
