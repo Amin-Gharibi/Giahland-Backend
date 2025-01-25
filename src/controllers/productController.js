@@ -109,7 +109,6 @@ exports.getProducts = async (req, res, next) => {
 				products: result.rows,
 				pagination: {
 					total: parseInt(totalCount.rows[0].count),
-					currentPage: parseInt(page),
 					totalPages: Math.ceil(totalCount.rows[0].count / limit),
 					limit: parseInt(limit),
 				},
