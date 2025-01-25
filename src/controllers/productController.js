@@ -306,3 +306,260 @@ exports.updateProduct = async (req, res, next) => {
 		next(error);
 	}
 };
+
+exports.deleteProduct = async (req, res, next) => {
+	try {
+		const result = await pool.query(
+			`DELETE FROM products 
+             WHERE id = $1 AND EXISTS (
+                 SELECT 1 
+                 FROM sellers s 
+                 WHERE s.id = products.seller_id AND s.user_id = $2
+             )
+             RETURNING id`,
+			[req.params.id, req.user.id]
+		);
+
+		if (result.rows.length === 0) {
+			throw new APIError("Product not found or you don't have permission to delete it", 404);
+		}
+
+		res.json({
+			success: true,
+			message: "Product deleted successfully",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.uploadImages = async (req, res, next) => {
+	const { id } = req.params;
+	const images = req.files;
+
+	if (!images || images.length === 0) {
+		return next(new APIError("No images uploaded", 400));
+	}
+
+	try {
+		const productResult = await pool.query(
+			`SELECT p.* 
+             FROM products p
+             JOIN sellers s ON p.seller_id = s.id
+             WHERE p.id = $1 AND s.user_id = $2`,
+			[id, req.user.id]
+		);
+
+		if (productResult.rows.length === 0) {
+			throw new APIError("Product not found or you don't have permission to update it", 404);
+		}
+
+		const imageValues = images.map((image) => `(${id}, ${pool.escape(image.filename)}, ${pool.escape(image.path)}, FALSE)`).join(",");
+
+		await pool.query(`
+            INSERT INTO product_images (product_id, filename, image_url, is_main)
+            VALUES ${imageValues}
+        `);
+
+		res.status(201).json({
+			success: true,
+			message: "Images uploaded successfully",
+			images: images.map((image) => ({ filename: image.filename, path: image.path })),
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+exports.deleteImage = async (req, res, next) => {
+	try {
+		const { id, imageId } = req.params;
+
+		const result = await pool.query(
+			`DELETE FROM product_images 
+             WHERE id = $1 AND product_id = $2 
+             RETURNING id`,
+			[imageId, id]
+		);
+
+		if (result.rows.length === 0) {
+			throw new APIError("Image not found or you don't have permission to delete it", 404);
+		}
+
+		res.json({
+			success: true,
+			message: "Image deleted successfully",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.getFeaturedProducts = async (req, res, next) => {
+	try {
+		const result = await pool.query(
+			`SELECT p.*, 
+                    c.fa_name as category_name, 
+                    c.en_name as category_name_en, 
+                    s.shop_name as seller_name, 
+                    s.rating as seller_rating,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'id', pi.id,
+                            'image_url', pi.image_url,
+                            'is_main', pi.is_main
+                        ))
+                        FROM product_images pi
+                        WHERE pi.product_id = p.id
+                    ) as images,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'name', pf.name,
+                            'value', pf.value
+                        ))
+                        FROM product_features pf
+                        WHERE pf.product_id = p.id
+                    ) as features
+             FROM products p
+             LEFT JOIN categories c ON p.category_id = c.id
+             LEFT JOIN sellers s ON p.seller_id = s.id
+             WHERE p.is_featured = TRUE AND p.status = 'active'
+             ORDER BY p.created_at DESC
+             LIMIT 10`
+		);
+
+		res.json({
+			success: true,
+			data: result.rows,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.getNewArrivals = async (req, res, next) => {
+	try {
+		const result = await pool.query(
+			`SELECT p.*, 
+                    c.fa_name as category_name, 
+                    c.en_name as category_name_en, 
+                    s.shop_name as seller_name, 
+                    s.rating as seller_rating,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'id', pi.id,
+                            'image_url', pi.image_url,
+                            'is_main', pi.is_main
+                        ))
+                        FROM product_images pi
+                        WHERE pi.product_id = p.id
+                    ) as images,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'name', pf.name,
+                            'value', pf.value
+                        ))
+                        FROM product_features pf
+                        WHERE pf.product_id = p.id
+                    ) as features
+             FROM products p
+             LEFT JOIN categories c ON p.category_id = c.id
+             LEFT JOIN sellers s ON p.seller_id = s.id
+             WHERE p.status = 'active'
+             ORDER BY p.created_at DESC
+             LIMIT 10`
+		);
+
+		res.json({
+			success: true,
+			data: result.rows,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.getBestSellers = async (req, res, next) => {
+	try {
+		const result = await pool.query(
+			`SELECT p.*, 
+                    c.fa_name as category_name, 
+                    c.en_name as category_name_en, 
+                    s.shop_name as seller_name, 
+                    s.rating as seller_rating,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'id', pi.id,
+                            'image_url', pi.image_url,
+                            'is_main', pi.is_main
+                        ))
+                        FROM product_images pi
+                        WHERE pi.product_id = p.id
+                    ) as images,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'name', pf.name,
+                            'value', pf.value
+                        ))
+                        FROM product_features pf
+                        WHERE pf.product_id = p.id
+                    ) as features
+             FROM products p
+             LEFT JOIN categories c ON p.category_id = c.id
+             LEFT JOIN sellers s ON p.seller_id = s.id
+             WHERE p.is_best_seller = TRUE AND p.status = 'active'
+             ORDER BY p.created_at DESC
+             LIMIT 10`
+		);
+
+		res.json({
+			success: true,
+			data: result.rows,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.getProductsByCategory = async (req, res, next) => {
+	try {
+		const { categoryId } = req.params;
+
+		const result = await pool.query(
+			`SELECT p.*, 
+                    c.fa_name as category_name, 
+                    c.en_name as category_name_en, 
+                    s.shop_name as seller_name, 
+                    s.rating as seller_rating,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'id', pi.id,
+                            'image_url', pi.image_url,
+                            'is_main', pi.is_main
+                        ))
+                        FROM product_images pi
+                        WHERE pi.product_id = p.id
+                    ) as images,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'name', pf.name,
+                            'value', pf.value
+                        ))
+                        FROM product_features pf
+                        WHERE pf.product_id = p.id
+                    ) as features
+             FROM products p
+             LEFT JOIN categories c ON p.category_id = c.id
+             LEFT JOIN sellers s ON p.seller_id = s.id
+             WHERE p.category_id = $1 AND p.status = 'active'
+             ORDER BY p.created_at DESC`,
+			[categoryId]
+		);
+
+		res.json({
+			success: true,
+			data: result.rows,
+		});
+	} catch (error) {
+		next(error);
+	}
+};

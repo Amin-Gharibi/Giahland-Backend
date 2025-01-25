@@ -78,110 +78,102 @@ exports.login = async (req, res, next) => {
 	}
 };
 
-exports.getMe = async (req, res, next) => {
+exports.verifyEmail = async (req, res, next) => {
+	const { token } = req.body;
+
 	try {
-		const result = await pool.query(
-			`SELECT 
-                id, 
-                first_name, 
-                last_name, 
-                email, 
-                phone_number, 
-                home_address, 
-                home_phone_number, 
-                role, 
-                profile_image_url,
-                created_at,
-                updated_at
-             FROM users 
-             WHERE id = $1`,
-			[req.user.id]
-		);
+		// Verify token
+		const decoded = jwt.verify(token, config.jwt.secret);
 
-		if (result.rows.length === 0) {
-			throw new APIError("User not found", 404);
-		}
-
-		// If user is a seller, get seller info
-		let sellerInfo = null;
-		if (result.rows[0].role === "seller") {
-			const sellerResult = await pool.query("SELECT id, shop_name, rating, status FROM sellers WHERE user_id = $1", [req.user.id]);
-			if (sellerResult.rows.length > 0) {
-				sellerInfo = sellerResult.rows[0];
-			}
-		}
+		// Update user verification status
+		await pool.query("UPDATE users SET is_verified = $1 WHERE id = $2", [true, decoded.id]);
 
 		res.json({
 			success: true,
-			data: {
-				...result.rows[0],
-				seller: sellerInfo,
+			message: "Email verified successfully",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.refreshToken = async (req, res, next) => {
+	const { token } = req.body;
+
+	if (!token) {
+		return next(new APIError("Refresh token is required", 400));
+	}
+
+	try {
+		// Verify the refresh token
+		const decoded = jwt.verify(token, config.jwt.secret);
+
+		// Check if the user exists
+		const userResult = await pool.query("SELECT id, email, role FROM users WHERE id = $1", [decoded.id]);
+		if (userResult.rows.length === 0) {
+			throw new APIError("User not found", 404);
+		}
+
+		// Generate a new access token
+		const newToken = jwt.sign({ id: userResult.rows[0].id, role: userResult.rows[0].role }, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
+
+		res.json({
+			success: true,
+			token: newToken,
+			user: {
+				id: userResult.rows[0].id,
+				email: userResult.rows[0].email,
+				role: userResult.rows[0].role,
 			},
 		});
-	} catch (error) {
-		next(error);
+	} catch (err) {
+		return next(new APIError("Invalid refresh token", 401));
 	}
 };
 
-exports.updateProfile = async (req, res, next) => {
-	const { firstName, lastName, phoneNumber, homeAddress, homePhoneNumber } = req.body;
+exports.forgotPassword = async (req, res, next) => {
+	const { email } = req.body;
 
 	try {
-		const result = await pool.query(
-			`UPDATE users 
-             SET 
-                first_name = COALESCE($1, first_name),
-                last_name = COALESCE($2, last_name),
-                phone_number = COALESCE($3, phone_number),
-                home_address = COALESCE($4, home_address),
-                home_phone_number = COALESCE($5, home_phone_number),
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = $6
-             RETURNING id, first_name, last_name, email, phone_number, home_address, home_phone_number, role`,
-			[firstName, lastName, phoneNumber, homeAddress, homePhoneNumber, req.user.id]
-		);
+		// Check if user exists
+		const result = await pool.query("SELECT id, email FROM users WHERE email = $1", [email]);
 
 		if (result.rows.length === 0) {
 			throw new APIError("User not found", 404);
 		}
 
+		// Generate reset token
+		const resetToken = jwt.sign({ id: result.rows[0].id }, config.jwt.secret, { expiresIn: "1h" });
+
+		// Send reset token via email (implement your email sending logic here)
+		// sendResetEmail(result.rows[0].email, resetToken);
+
 		res.json({
 			success: true,
-			data: result.rows[0],
+			message: "Reset token sent to email",
 		});
 	} catch (error) {
 		next(error);
 	}
 };
 
-exports.updatePassword = async (req, res, next) => {
-	const { currentPassword, newPassword } = req.body;
+exports.resetPassword = async (req, res, next) => {
+	const { token, newPassword } = req.body;
 
 	try {
-		// Get current user with password
-		const user = await pool.query("SELECT password_hash FROM users WHERE id = $1", [req.user.id]);
-
-		// Check current password
-		const isMatch = await bcrypt.compare(currentPassword, user.rows[0].password_hash);
-		if (!isMatch) {
-			throw new APIError("Current password is incorrect", 401);
-		}
+		// Verify token
+		const decoded = jwt.verify(token, config.jwt.secret);
 
 		// Hash new password
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-		// Update password
-		await pool.query(
-			`UPDATE users 
-             SET password_hash = $1, updated_at = CURRENT_TIMESTAMP
-             WHERE id = $2`,
-			[hashedPassword, req.user.id]
-		);
+		// Update user password
+		await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [hashedPassword, decoded.id]);
 
 		res.json({
 			success: true,
-			message: "Password updated successfully",
+			message: "Password reset successfully",
 		});
 	} catch (error) {
 		next(error);
