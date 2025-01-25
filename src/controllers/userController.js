@@ -115,9 +115,10 @@ exports.updatePassword = async (req, res, next) => {
 exports.getAddresses = async (req, res, next) => {
 	try {
 		const result = await pool.query(
-			`SELECT id, user_id, address, city, province, postal_code, created_at, updated_at 
+			`SELECT * 
              FROM addresses 
-             WHERE user_id = $1`,
+             WHERE user_id = $1
+			 ORDER BY is_default DESC, created_at DESC`,
 			[req.user.id]
 		);
 
@@ -131,29 +132,59 @@ exports.getAddresses = async (req, res, next) => {
 };
 
 exports.createAddress = async (req, res, next) => {
-	const { address, city, province, postalCode } = req.body;
+	const { address, city, province, postalCode, isDefault = false } = req.body;
 
 	try {
+		await pool.query("BEGIN");
+
+		// If this address is being set as default, remove default from other addresses
+		if (isDefault) {
+			await pool.query(
+				`UPDATE addresses 
+                 SET is_default = false 
+                 WHERE user_id = $1`,
+				[req.user.id]
+			);
+		}
+
 		const result = await pool.query(
-			`INSERT INTO addresses (user_id, address, city, province, postal_code)
-             VALUES ($1, $2, $3, $4, $5)
-             RETURNING id, user_id, address, city, province, postal_code, created_at, updated_at`,
-			[req.user.id, address, city, province, postalCode]
+			`INSERT INTO addresses (
+                user_id, address, city, province, 
+                postal_code, is_default
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *`,
+			[req.user.id, address, city, province, postalCode, isDefault]
 		);
+
+		await pool.query("COMMIT");
 
 		res.status(201).json({
 			success: true,
 			data: result.rows[0],
 		});
 	} catch (error) {
+		await pool.query("ROLLBACK");
 		next(error);
 	}
 };
 
 exports.updateAddress = async (req, res, next) => {
-	const { address, city, province, postalCode } = req.body;
+	const { address, city, province, postalCode, isDefault } = req.body;
 
 	try {
+		await pool.query("BEGIN");
+
+		// If this address is being set as default, remove default from other addresses
+		if (isDefault) {
+			await pool.query(
+				`UPDATE addresses 
+                 SET is_default = false 
+                 WHERE user_id = $1 AND id != $2`,
+				[req.user.id, req.params.id]
+			);
+		}
+
 		const result = await pool.query(
 			`UPDATE addresses 
              SET 
@@ -161,21 +192,63 @@ exports.updateAddress = async (req, res, next) => {
                 city = COALESCE($2, city),
                 province = COALESCE($3, province),
                 postal_code = COALESCE($4, postal_code),
+                is_default = COALESCE($5, is_default),
                 updated_at = CURRENT_TIMESTAMP
-             WHERE id = $5 AND user_id = $6
-             RETURNING id, user_id, address, city, province, postal_code, created_at, updated_at`,
-			[address, city, province, postalCode, req.params.id, req.user.id]
+             WHERE id = $6 AND user_id = $7
+             RETURNING *`,
+			[address, city, province, postalCode, isDefault, req.params.id, req.user.id]
 		);
 
 		if (result.rows.length === 0) {
 			throw new APIError("Address not found", 404);
 		}
 
+		await pool.query("COMMIT");
+
 		res.json({
 			success: true,
 			data: result.rows[0],
 		});
 	} catch (error) {
+		await pool.query("ROLLBACK");
+		next(error);
+	}
+};
+
+exports.setDefaultAddress = async (req, res, next) => {
+	try {
+		await pool.query("BEGIN");
+
+		// Remove default from all other addresses
+		await pool.query(
+			`UPDATE addresses 
+             SET is_default = false 
+             WHERE user_id = $1`,
+			[req.user.id]
+		);
+
+		// Set new default address
+		const result = await pool.query(
+			`UPDATE addresses 
+             SET is_default = true,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1 AND user_id = $2
+             RETURNING *`,
+			[req.params.id, req.user.id]
+		);
+
+		if (result.rows.length === 0) {
+			throw new APIError("Address not found", 404);
+		}
+
+		await pool.query("COMMIT");
+
+		res.json({
+			success: true,
+			data: result.rows[0],
+		});
+	} catch (error) {
+		await pool.query("ROLLBACK");
 		next(error);
 	}
 };

@@ -135,6 +135,19 @@ CREATE TABLE product_categories (
     UNIQUE(product_id, category_id)
 );
 
+-- Create Addresses table
+CREATE TABLE addresses (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id uuid REFERENCES users(id) ON DELETE CASCADE,
+    address TEXT NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    province VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(20) NOT NULL,
+    is_default BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_products_seller ON products(seller_id);
@@ -145,6 +158,7 @@ CREATE INDEX idx_comments_blog ON comments(blog_id);
 CREATE INDEX idx_product_images_product ON product_images(product_id);
 CREATE INDEX idx_email_verifications_user ON email_verifications(user_id);
 CREATE INDEX idx_email_verifications_code ON email_verifications(verification_code);
+CREATE INDEX idx_addresses_user_id ON addresses(user_id);
 
 -- Create updated_at triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()

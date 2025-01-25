@@ -14,5 +14,6 @@ router.get("/addresses", userController.getAddresses);
 router.post("/addresses", validateRequest(userSchemas.createAddress), userController.createAddress);
 router.put("/addresses/:id", validateRequest(userSchemas.updateAddress), userController.updateAddress);
 router.delete("/addresses/:id", userController.deleteAddress);
+router.put("/addresses/:id/default", userController.setDefaultAddress);
 
 module.exports = router;
