@@ -41,3 +41,39 @@ exports.register = async (req, res) => {
 		res.status(500).json({ message: "Server error" });
 	}
 };
+
+exports.login = async (req, res) => {
+	const { email, password } = req.body;
+
+	try {
+		// Check if user exists
+		const result = await pool.query("SELECT id, email, password_hash, role FROM users WHERE email = $1", [email]);
+
+		if (result.rows.length === 0) {
+			return res.status(401).json({ message: "Invalid credentials" });
+		}
+
+		// Check password
+		const isMatch = await bcrypt.compare(password, result.rows[0].password_hash);
+
+		if (!isMatch) {
+			return res.status(401).json({ message: "Invalid credentials" });
+		}
+
+		// Generate JWT
+		const token = jwt.sign({ id: result.rows[0].id, role: result.rows[0].role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
+
+		res.json({
+			success: true,
+			token,
+			user: {
+				id: result.rows[0].id,
+				email: result.rows[0].email,
+				role: result.rows[0].role,
+			},
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Server error" });
+	}
+};
