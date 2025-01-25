@@ -277,13 +277,7 @@ INSERT INTO users (
     'Admin',
     'User',
     'admin@giahland.com',
-    '09031938364',
+    '09123456789',
     '$2a$10$0lzZoLKyhKO0RkO3GLGS9.89OJuGTsDbJwbgV7JL/NuWLqtuvF7kK',
     'admin'
 );
-
--- Insert some default categories
--- INSERT INTO categories (fa_name, en_name) VALUES
---     ('گل‌های آپارتمانی', 'indoor-plants'),
---     ('گل‌های باغچه‌ای', 'outdoor-plants'),
---     ('گل‌های کاکتوس', 'cactus');
