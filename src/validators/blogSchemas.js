@@ -10,9 +10,8 @@ const blogSchemas = {
 		content: Joi.string().required().messages({
 			"any.required": "Content is required",
 		}),
-		authorId: Joi.string().uuid().required().messages({
+		authorId: Joi.string().uuid().messages({
 			"string.guid": "Invalid author ID format",
-			"any.required": "Author ID is required",
 		}),
 	}),
 

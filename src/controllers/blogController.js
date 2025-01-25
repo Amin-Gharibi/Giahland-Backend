@@ -3,8 +3,7 @@ const { APIError } = require("../middlewares/errorHandler");
 
 exports.getBlogs = async (req, res, next) => {
 	try {
-		const { page = 1, limit = 10 } = req.query;
-		const offset = (page - 1) * limit;
+		const { limit = 10, offset = 0 } = req.query;
 
 		const result = await pool.query(
 			`SELECT * FROM blogs 
@@ -45,7 +44,7 @@ exports.createBlog = async (req, res, next) => {
 			`INSERT INTO blogs (title, content, author_id)
              VALUES ($1, $2, $3)
              RETURNING *`,
-			[title, content, authorId]
+			[title, content, authorId || req.user.id]
 		);
 
 		res.status(201).json({
