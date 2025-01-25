@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
 const productSchemas = {
-	createProduct: Joi.object({
+	create: Joi.object({
 		name: Joi.string().min(3).max(255).required().messages({
 			"string.min": "Product name must be at least 3 characters long",
 			"string.max": "Product name cannot exceed 255 characters",
@@ -30,13 +30,26 @@ const productSchemas = {
 		}),
 	}),
 
-	updateProduct: Joi.object({
-		name: Joi.string().min(3).max(255),
-		price: Joi.number().positive(),
-		description: Joi.string().max(2000).allow(""),
-		categoryId: Joi.string().uuid(),
-		stock: Joi.number().integer().min(0),
-		status: Joi.string().valid("active", "inactive", "out_of_stock"),
+	update: Joi.object({
+		name: Joi.string().min(3).max(255).messages({
+			"string.min": "Product name must be at least 3 characters long",
+			"string.max": "Product name cannot exceed 255 characters",
+		}),
+		price: Joi.number().positive().messages({
+			"number.positive": "Price must be a positive number",
+		}),
+		description: Joi.string().max(2000).allow("").messages({
+			"string.max": "Description cannot exceed 2000 characters",
+		}),
+		categoryId: Joi.string().uuid().messages({
+			"string.guid": "Invalid category ID format",
+		}),
+		stock: Joi.number().integer().min(0).messages({
+			"number.min": "Stock cannot be negative",
+		}),
+		status: Joi.string().valid("active", "inactive", "out_of_stock").messages({
+			"any.only": "Invalid status",
+		}),
 	}),
 };
 

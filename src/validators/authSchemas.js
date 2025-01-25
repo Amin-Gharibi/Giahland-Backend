@@ -1,6 +1,6 @@
 const Joi = require("joi");
 
-const userSchemas = {
+const authSchemas = {
 	register: Joi.object({
 		firstName: Joi.string().min(2).max(50).required().messages({
 			"string.min": "First name must be at least 2 characters long",
@@ -45,18 +45,28 @@ const userSchemas = {
 		}),
 	}),
 
-	updateProfile: Joi.object({
-		firstName: Joi.string().min(2).max(50),
-		lastName: Joi.string().min(2).max(50),
-		phoneNumber: Joi.string().pattern(/^09[0-9]{9}$/),
-		homeAddress: Joi.string().max(500),
-		homePhoneNumber: Joi.string().pattern(/^0[0-9]{10}$/),
+	verifyEmail: Joi.object({
+		token: Joi.string().required().messages({
+			"any.required": "Token is required",
+		}),
 	}),
 
-	// Add this to your existing userSchemas object in userValidators.js
-	updatePassword: Joi.object({
-		currentPassword: Joi.string().required().messages({
-			"any.required": "Current password is required",
+	refreshToken: Joi.object({
+		token: Joi.string().required().messages({
+			"any.required": "Refresh token is required",
+		}),
+	}),
+
+	forgotPassword: Joi.object({
+		email: Joi.string().email().required().messages({
+			"string.email": "Please provide a valid email address",
+			"any.required": "Email is required",
+		}),
+	}),
+
+	resetPassword: Joi.object({
+		token: Joi.string().required().messages({
+			"any.required": "Token is required",
 		}),
 		newPassword: Joi.string()
 			.min(8)
@@ -71,4 +81,4 @@ const userSchemas = {
 	}),
 };
 
-module.exports = userSchemas;
+module.exports = authSchemas;
