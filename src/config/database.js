@@ -7,9 +7,9 @@ const pool = new Pool({
 	database: config.db.name,
 	password: config.db.password,
 	port: config.db.port,
-	max: 20, // Maximum number of clients in the pool
-	idleTimeoutMillis: 30000,
-	connectionTimeoutMillis: 2000,
+	max: config.db.max,
+	idleTimeoutMillis: config.db.idleTimeoutMillis,
+	connectionTimeoutMillis: config.db.connectionTimeoutMillis,
 });
 
 // Test database connection
