@@ -46,8 +46,8 @@ const authSchemas = {
 	}),
 
 	verifyEmail: Joi.object({
-		token: Joi.string().required().messages({
-			"any.required": "Token is required",
+		code: Joi.string().required().messages({
+			"any.required": "Code is required",
 		}),
 	}),
 

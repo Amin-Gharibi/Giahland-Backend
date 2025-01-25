@@ -117,6 +117,16 @@ CREATE TABLE comments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create Email Verification Codes table
+CREATE TABLE email_verifications (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id uuid REFERENCES users(id) ON DELETE CASCADE,
+    verification_code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    attempts INTEGER DEFAULT 0
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_products_seller ON products(seller_id);
@@ -124,6 +134,8 @@ CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);
 CREATE INDEX idx_comments_blog ON comments(blog_id);
 CREATE INDEX idx_product_images_product ON product_images(product_id);
+CREATE INDEX idx_email_verifications_user ON email_verifications(user_id);
+CREATE INDEX idx_email_verifications_code ON email_verifications(verification_code);
 
 -- Create updated_at triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -173,7 +185,7 @@ INSERT INTO users (
     'User',
     'admin@giahland.com',
     '09031938364',
-    '$2b$10$56e4d3fbf302f3309bf84ab7c9209bd039dd9bccac8b7c09fe35896650baca32',
+    '$2a$10$0lzZoLKyhKO0RkO3GLGS9.89OJuGTsDbJwbgV7JL/NuWLqtuvF7kK',
     'admin'
 );
 
