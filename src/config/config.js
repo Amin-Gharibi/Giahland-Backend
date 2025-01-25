@@ -45,6 +45,13 @@ const config = {
 	logging: {
 		level: process.env.LOG_LEVEL || "debug",
 	},
+
+	// Email configuration
+	email: {
+		user: process.env.EMAIL_USER,
+		password: process.env.EMAIL_PASSWORD,
+		from: process.env.EMAIL_FROM,
+	}
 };
 
 // Validate required configuration

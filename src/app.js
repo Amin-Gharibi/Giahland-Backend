@@ -5,7 +5,7 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const {errorHandler} = require("./middlewares/errorHandler");
 const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = require("../swagger.json");
+// const swaggerDocument = require("../swagger.json");
 
 // Import routes
 const indexRoutes = require("./routes/index");

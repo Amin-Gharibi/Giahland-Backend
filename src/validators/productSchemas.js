@@ -89,12 +89,36 @@ const productSchemas = {
 	}),
 
 	uploadImages: Joi.object({
-		images: Joi.array().min(1).max(5).required().message({
-			"array.min": "You Must Select At Least One Image",
-			"array.max": "You Must Select At Most 5 Images",
-			"any.required": "Images Are Required!"
-		})
-	})
+		images: Joi.array()
+			.items(
+				Joi.object({
+					fieldname: Joi.string().required(),
+					originalname: Joi.string().required(),
+					encoding: Joi.string().required(),
+					mimetype: Joi.string().valid("image/jpeg", "image/png", "image/webp").required().messages({
+						"any.only": "Only JPEG, PNG, and WebP images are allowed",
+					}),
+					destination: Joi.string().required(),
+					filename: Joi.string().required(),
+					path: Joi.string().required(),
+					size: Joi.number()
+						.max(5 * 1024 * 1024)
+						.required() // 5MB max file size
+						.messages({
+							"number.max": "Each image must be less than 5MB",
+						}),
+				})
+			)
+			.min(1)
+			.max(5)
+			.required()
+			.messages({
+				"array.min": "You must select at least one image",
+				"array.max": "You can upload maximum 5 images",
+				"array.base": "Images must be provided in correct format",
+				"any.required": "Images are required!",
+			}),
+	}),
 };
 
 module.exports = productSchemas;

@@ -2,9 +2,8 @@ const pool = require("../config/database");
 const { APIError } = require("../middlewares/errorHandler");
 exports.getProducts = async (req, res, next) => {
 	try {
-		const { page = 1, limit = 10, category, minPrice, maxPrice, sortBy = "created_at", order = "DESC" } = req.query;
+		const { limit = 10, offset = 0, category, minPrice, maxPrice, sortBy = "created_at", order = "DESC" } = req.query;
 
-		const offset = (page - 1) * limit;
 		const params = [];
 		let whereClause = "WHERE p.status = $1";
 		params.push("active");
