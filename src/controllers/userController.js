@@ -115,7 +115,7 @@ exports.updatePassword = async (req, res, next) => {
 exports.getAddresses = async (req, res, next) => {
 	try {
 		const result = await pool.query(
-			`SELECT id, user_id, address, city, state, postal_code, country, created_at, updated_at 
+			`SELECT id, user_id, address, city, province, postal_code, created_at, updated_at 
              FROM addresses 
              WHERE user_id = $1`,
 			[req.user.id]
@@ -131,14 +131,14 @@ exports.getAddresses = async (req, res, next) => {
 };
 
 exports.createAddress = async (req, res, next) => {
-	const { address, city, state, postalCode, country } = req.body;
+	const { address, city, province, postalCode } = req.body;
 
 	try {
 		const result = await pool.query(
-			`INSERT INTO addresses (user_id, address, city, state, postal_code, country)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             RETURNING id, user_id, address, city, state, postal_code, country, created_at, updated_at`,
-			[req.user.id, address, city, state, postalCode, country]
+			`INSERT INTO addresses (user_id, address, city, province, postal_code)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id, user_id, address, city, province, postal_code, created_at, updated_at`,
+			[req.user.id, address, city, province, postalCode]
 		);
 
 		res.status(201).json({
@@ -151,7 +151,7 @@ exports.createAddress = async (req, res, next) => {
 };
 
 exports.updateAddress = async (req, res, next) => {
-	const { address, city, state, postalCode, country } = req.body;
+	const { address, city, province, postalCode } = req.body;
 
 	try {
 		const result = await pool.query(
@@ -159,13 +159,12 @@ exports.updateAddress = async (req, res, next) => {
              SET 
                 address = COALESCE($1, address),
                 city = COALESCE($2, city),
-                state = COALESCE($3, state),
+                province = COALESCE($3, province),
                 postal_code = COALESCE($4, postal_code),
-                country = COALESCE($5, country),
                 updated_at = CURRENT_TIMESTAMP
-             WHERE id = $6 AND user_id = $7
-             RETURNING id, user_id, address, city, state, postal_code, country, created_at, updated_at`,
-			[address, city, state, postalCode, country, req.params.id, req.user.id]
+             WHERE id = $5 AND user_id = $6
+             RETURNING id, user_id, address, city, province, postal_code, created_at, updated_at`,
+			[address, city, province, postalCode, req.params.id, req.user.id]
 		);
 
 		if (result.rows.length === 0) {

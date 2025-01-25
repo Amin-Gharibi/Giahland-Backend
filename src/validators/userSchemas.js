@@ -50,17 +50,13 @@ const userSchemas = {
 			"string.max": "City cannot exceed 100 characters",
 			"any.required": "City is required",
 		}),
-		state: Joi.string().max(100).required().messages({
-			"string.max": "State cannot exceed 100 characters",
-			"any.required": "State is required",
+		province: Joi.string().max(100).required().messages({
+			"string.max": "Province cannot exceed 100 characters",
+			"any.required": "Province is required",
 		}),
 		postalCode: Joi.string().max(20).required().messages({
 			"string.max": "Postal code cannot exceed 20 characters",
 			"any.required": "Postal code is required",
-		}),
-		country: Joi.string().max(100).required().messages({
-			"string.max": "Country cannot exceed 100 characters",
-			"any.required": "Country is required",
 		}),
 	}),
 
@@ -71,14 +67,11 @@ const userSchemas = {
 		city: Joi.string().max(100).messages({
 			"string.max": "City cannot exceed 100 characters",
 		}),
-		state: Joi.string().max(100).messages({
-			"string.max": "State cannot exceed 100 characters",
+		province: Joi.string().max(100).messages({
+			"string.max": "Province cannot exceed 100 characters",
 		}),
 		postalCode: Joi.string().max(20).messages({
 			"string.max": "Postal code cannot exceed 20 characters",
-		}),
-		country: Joi.string().max(100).messages({
-			"string.max": "Country cannot exceed 100 characters",
 		}),
 	}),
 };
