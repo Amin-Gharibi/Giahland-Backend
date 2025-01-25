@@ -22,9 +22,17 @@ exports.getCart = async (req, res, next) => {
 exports.addItem = async (req, res, next) => {
 	const { productId, quantity } = req.body;
 	try {
-		const productResult = await pool.query("SELECT * FROM products WHERE id = $1", [productId]);
+		const productResult = await pool.query("SELECT id, stock FROM products WHERE id = $1", [productId]);
+
 		if (productResult.rows.length === 0) {
 			throw new APIError("Product not found", 404);
+		}
+
+		const product = productResult.rows[0];
+
+		// Check if there's enough stock
+		if (product.stock < quantity) {
+			throw new APIError(`Not enough stock. Available: ${product.stock}`, 400);
 		}
 
 		const result = await pool.query(
