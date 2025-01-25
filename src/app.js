@@ -4,6 +4,8 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const {errorHandler} = require("./middlewares/errorHandler");
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("../swagger.json");
 
 // Import routes
 const indexRoutes = require("./routes/index");
@@ -22,6 +24,9 @@ const limiter = rateLimit({
 	max: 100, // limit each IP to 100 requests per windowMs
 });
 app.use(limiter);
+
+// Swagger setup
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
 app.use("/api", indexRoutes);
