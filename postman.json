@@ -1,0 +1,2242 @@
+{
+	"info": {
+		"_postman_id": "b5bad74b-c9f9-45d3-a365-b7fd6ba81ad3",
+		"name": "GiahLand",
+		"description": "API Documentation for the backend side of Giahland By Amin Gharibi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31484052"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "firstName",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "lastName",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "",
+									"description": "must be at least 8 chars containing uppercase, lowercase and numbers",
+									"type": "text"
+								},
+								{
+									"key": "phoneNumber",
+									"value": "",
+									"description": "must be 09xxxxxxxx",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/auth/register",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/auth/login",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "token",
+									"value": "",
+									"description": "must be refresh token",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/auth/refresh-token",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"auth",
+								"refresh-token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "email",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/auth/forgot-password",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"auth",
+								"forgot-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "newPassword",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/auth/reset-password",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Request Verification Code",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/auth/req-code",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"auth",
+								"req-code"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "code",
+									"value": "",
+									"description": "must be 6 digits",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/auth/verify-email",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"auth",
+								"verify-email"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Blog",
+			"item": [
+				{
+					"name": "Create One",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "title",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "authorId",
+									"value": "",
+									"description": "not required if the author is the sending user",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/blogs",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"blogs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Many",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/blogs?limit=10&offset=0&sortBy&order&category",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"blogs"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "sortBy",
+									"value": null,
+									"description": "created_at || title || views || author_id"
+								},
+								{
+									"key": "order",
+									"value": null,
+									"description": "DEC || ASC"
+								},
+								{
+									"key": "category",
+									"value": null,
+									"description": "category id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update One",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "title",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/blogs/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"blogs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "blog id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "One",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/blogs/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"blogs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "blog id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/blogs/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"blogs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "blog id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cart",
+			"item": [
+				{
+					"name": "User Cart",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/cart",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"cart"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Item To Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "productId",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/cart/items",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"cart",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Quantity",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "quantity",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/cart/items/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"cart",
+								"items",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "item id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Item",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/cart/items/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"cart",
+								"items",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "item id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clear Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/cart",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"cart"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Category",
+			"item": [
+				{
+					"name": "All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/categories",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/categories/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"categories",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "cateogory id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create One",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "faName",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "enName",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/categories",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update One",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "faName",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "enName",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/categories/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"categories",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "category id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/categories/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"categories",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "category id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order",
+			"item": [
+				{
+					"name": "Create One",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "addressId",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "paymentMethod",
+									"value": "",
+									"description": "credit_cart || bank_transfer",
+									"type": "text"
+								},
+								{
+									"key": "items",
+									"value": "",
+									"description": "each item should contain [productId, quantity, price]",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/orders",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "My Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/orders/me",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orders",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Order Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/orders/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orders",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "order Id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Seller Orders",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/orders/seller-orders",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orders",
+								"seller-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Order Status",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/orders/:id/status",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"orders",
+								":id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "order id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Create Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "categories",
+									"value": "",
+									"description": "array of category ids",
+									"type": "text"
+								},
+								{
+									"key": "stock",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "features",
+									"value": "",
+									"description": "array of details",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/products",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Images",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "images",
+									"value": "",
+									"description": "array of maximum 5 images",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/products/:id/images",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								":id",
+								"images"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "categories",
+									"value": "",
+									"description": "array of category ids",
+									"type": "text"
+								},
+								{
+									"key": "stock",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "features",
+									"value": "",
+									"description": "array of features",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/products/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "product id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "product id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products/:id/images/:imageId",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								":id",
+								"images",
+								":imageId"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "product id"
+								},
+								{
+									"key": "imageId",
+									"value": "",
+									"description": "image id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Many",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products?limit&offset&category&minPrice&maxPrice&sortBy&order",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": null
+								},
+								{
+									"key": "offset",
+									"value": null
+								},
+								{
+									"key": "category",
+									"value": null
+								},
+								{
+									"key": "minPrice",
+									"value": null
+								},
+								{
+									"key": "maxPrice",
+									"value": null
+								},
+								{
+									"key": "sortBy",
+									"value": null,
+									"description": "created_at || price || name"
+								},
+								{
+									"key": "order",
+									"value": null,
+									"description": "DESC || ASC"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "product id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "By Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products/category/:categoryId",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								"category",
+								":categoryId"
+							],
+							"variable": [
+								{
+									"key": "categoryId",
+									"value": "",
+									"description": "category id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Featured Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products/featured",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								"featured"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Best Seller Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products/best-sellers",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								"best-sellers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Arrival Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/products/new-arrivals",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"products",
+								"new-arrivals"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Seller",
+			"item": [
+				{
+					"name": "Add Seller",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "userId",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "shopName",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/sellers/add-seller",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers",
+								"add-seller"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Seller",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "shopName",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/sellers/profile",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sellers List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/sellers/list?limit&offset&status&sortBy&order",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers",
+								"list"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": null
+								},
+								{
+									"key": "offset",
+									"value": null
+								},
+								{
+									"key": "status",
+									"value": null,
+									"description": "active || pending || suspended"
+								},
+								{
+									"key": "sortBy",
+									"value": null,
+									"description": "created_at || shop_name || status || rating"
+								},
+								{
+									"key": "order",
+									"value": null,
+									"description": "DEC || ASC"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Private Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/sellers",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Public Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/sellers/:id/profile",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers",
+								":id",
+								"profile"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "seller id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Seller Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/sellers/:id/products?limit&offset&sortBy&order&status&category&minPrice&maxPrice&search",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers",
+								":id",
+								"products"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": null
+								},
+								{
+									"key": "offset",
+									"value": null
+								},
+								{
+									"key": "sortBy",
+									"value": null,
+									"description": "created_at || title || price || stock || status"
+								},
+								{
+									"key": "order",
+									"value": null,
+									"description": "DEC || ASC"
+								},
+								{
+									"key": "status",
+									"value": null,
+									"description": "active || inactive || out_of_stock"
+								},
+								{
+									"key": "category",
+									"value": null,
+									"description": "categoryId"
+								},
+								{
+									"key": "minPrice",
+									"value": null
+								},
+								{
+									"key": "maxPrice",
+									"value": null
+								},
+								{
+									"key": "search",
+									"value": null
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "seller id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Orders",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/sellers/orders",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Statistics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/sellers/statistics",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"sellers",
+								"statistics"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Me",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/users/me",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "firstName",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "lastName",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "phoneNumber",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "homeAddress",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "homePhoneNumber",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/users/profile",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "currentPassword",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "newPassword",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/users/password",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Address",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "address",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "province",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "postalCode",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/users/addresses",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"addresses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Addresses",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/users/addresses",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"addresses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Address",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "address",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "province",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "postalCode",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/users/addresses/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"addresses",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "address id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Address",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/users/addresses/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"addresses",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "address id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set Default Address",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/users/addresses/:id/default",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"users",
+								"addresses",
+								":id",
+								"default"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "address id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comment",
+			"item": [
+				{
+					"name": "Create One",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "content",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "rating",
+									"value": "",
+									"description": "between 1 to 5",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/comments/:parentType/:parentId/comments",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"comments",
+								":parentType",
+								":parentId",
+								"comments"
+							],
+							"variable": [
+								{
+									"key": "parentType",
+									"value": "",
+									"description": "product || blog"
+								},
+								{
+									"key": "parentId",
+									"value": "",
+									"description": "id of the product or blog"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Page Comments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/comments/:parentType/:parentId/comments",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"comments",
+								":parentType",
+								":parentId",
+								"comments"
+							],
+							"variable": [
+								{
+									"key": "parentType",
+									"value": "",
+									"description": "product || blog"
+								},
+								{
+									"key": "parentId",
+									"value": "",
+									"description": "id of the product or blog"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "status",
+									"value": "",
+									"description": "pending || approved || rejected",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/comments/:id/status",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"comments",
+								":id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "comment id"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete One",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzQ1NzcxLCJpYXQiOjE3Mzc3NDQ4NzEsImp0aSI6IjU0NjQzN2IwNTcxMTQzODNhMmZiOGJjODc3YmQ4YjU3IiwidXNlcl9pZCI6MX0.RMuNnfmbOXRKeFmBpX_PiI5CRJ_gjOIcwXCWaP6m4tI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/comments/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"comments",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "comment id"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		}
+	]
+}

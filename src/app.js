@@ -5,7 +5,11 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const {errorHandler} = require("./middlewares/errorHandler");
 const swaggerUi = require("swagger-ui-express");
-// const swaggerDocument = require("../swagger.json");
+const yaml = require("js-yaml");
+const fs = require("fs");
+const path = require("path");
+
+const swaggerDocument = yaml.load(fs.readFileSync(path.resolve(__dirname, "../swagger.yaml"), "utf8"));
 
 // Import routes
 const indexRoutes = require("./routes/index");
@@ -26,7 +30,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Swagger setup
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
 app.use("/api", indexRoutes);

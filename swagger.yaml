@@ -1,0 +1,1250 @@
+openapi: 3.0.0
+info:
+  title: GiahLand
+  description: API Documentation for the backend side of Giahland By Amin Gharibi
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+tags:
+  - name: Auth
+  - name: Blog
+  - name: Cart
+  - name: Category
+  - name: Order
+  - name: Product
+  - name: Seller
+  - name: User
+  - name: Comment
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                  description: >-
+                    must be at least 8 chars containing uppercase, lowercase and
+                    numbers
+                phoneNumber:
+                  type: string
+                  description: must be 09xxxxxxxx
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/refresh-token:
+    post:
+      tags:
+        - Auth
+      summary: Refresh Token
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: must be refresh token
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Forgot Password
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset Password
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/req-code:
+    post:
+      tags:
+        - Auth
+      summary: Request Verification Code
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/verify-email:
+    post:
+      tags:
+        - Auth
+      summary: Verify Email
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: must be 6 digits
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /blogs:
+    post:
+      tags:
+        - Blog
+      summary: Create One
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                authorId:
+                  type: string
+                  description: not required if the author is the sending user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Blog
+      summary: Many
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '10'
+        - name: offset
+          in: query
+          schema:
+            type: integer
+          example: '0'
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          description: created_at || title || views || author_id
+        - name: order
+          in: query
+          schema:
+            type: string
+          description: DEC || ASC
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: category id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /blogs/{id}:
+    put:
+      tags:
+        - Blog
+      summary: Update One
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: blog id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Blog
+      summary: One
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: blog id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Blog
+      summary: By ID
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: blog id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /cart:
+    get:
+      tags:
+        - Cart
+      summary: User Cart
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Cart
+      summary: Clear Cart
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add Item To Cart
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+                quantity:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /cart/items/{id}:
+    put:
+      tags:
+        - Cart
+      summary: Update Quantity
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: string
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: item id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Cart
+      summary: Remove Item
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: item id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /categories:
+    get:
+      tags:
+        - Category
+      summary: All
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Category
+      summary: Create One
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                faName:
+                  type: string
+                enName:
+                  type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /categories/{id}:
+    get:
+      tags:
+        - Category
+      summary: By ID
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: cateogory id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    put:
+      tags:
+        - Category
+      summary: Update One
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                faName:
+                  type: string
+                enName:
+                  type: string
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: category id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Category
+      summary: Delete Category
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: category id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders:
+    post:
+      tags:
+        - Order
+      summary: Create One
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                addressId:
+                  type: string
+                paymentMethod:
+                  type: string
+                  description: credit_cart || bank_transfer
+                items:
+                  type: string
+                  description: each item should contain [productId, quantity, price]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/me:
+    get:
+      tags:
+        - Order
+      summary: My Orders
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/{id}:
+    get:
+      tags:
+        - Order
+      summary: Order Details
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: order Id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/seller-orders:
+    get:
+      tags:
+        - Order
+      summary: Seller Orders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/{id}/status:
+    put:
+      tags:
+        - Order
+      summary: Order Status
+      requestBody:
+        content: {}
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: order id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products:
+    post:
+      tags:
+        - Product
+      summary: Create Product
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                price:
+                  type: string
+                description:
+                  type: string
+                categories:
+                  type: string
+                  description: array of category ids
+                stock:
+                  type: string
+                features:
+                  type: string
+                  description: array of details
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Product
+      summary: Many
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: string
+        - name: offset
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: string
+        - name: maxPrice
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          description: created_at || price || name
+        - name: order
+          in: query
+          schema:
+            type: string
+          description: DESC || ASC
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/{id}/images:
+    post:
+      tags:
+        - Product
+      summary: Upload Images
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: string
+                  description: array of maximum 5 images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/{id}:
+    put:
+      tags:
+        - Product
+      summary: Update Product
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                price:
+                  type: string
+                description:
+                  type: string
+                categories:
+                  type: string
+                  description: array of category ids
+                stock:
+                  type: string
+                status:
+                  type: string
+                features:
+                  type: string
+                  description: array of features
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: product id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Product
+      summary: Delete Product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: product id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Product
+      summary: By ID
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: product id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/{id}/images/{imageId}:
+    delete:
+      tags:
+        - Product
+      summary: Delete Image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: product id
+        - name: imageId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: image id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/category/{categoryId}:
+    get:
+      tags:
+        - Product
+      summary: By Category
+      parameters:
+        - name: categoryId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: category id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/featured:
+    get:
+      tags:
+        - Product
+      summary: Featured Products
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/best-sellers:
+    get:
+      tags:
+        - Product
+      summary: Best Seller Products
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/new-arrivals:
+    get:
+      tags:
+        - Product
+      summary: New Arrival Products
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/add-seller:
+    post:
+      tags:
+        - Seller
+      summary: Add Seller
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                shopName:
+                  type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/profile:
+    put:
+      tags:
+        - Seller
+      summary: Update Seller
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                shopName:
+                  type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/list:
+    get:
+      tags:
+        - Seller
+      summary: Sellers List
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: string
+        - name: offset
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: active || pending || suspended
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          description: created_at || shop_name || status || rating
+        - name: order
+          in: query
+          schema:
+            type: string
+          description: DEC || ASC
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers:
+    get:
+      tags:
+        - Seller
+      summary: Private Profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/{id}/profile:
+    get:
+      tags:
+        - Seller
+      summary: Public Profile
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: seller id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/{id}/products:
+    get:
+      tags:
+        - Seller
+      summary: Seller Products
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: string
+        - name: offset
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+          description: created_at || title || price || stock || status
+        - name: order
+          in: query
+          schema:
+            type: string
+          description: DEC || ASC
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: active || inactive || out_of_stock
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: categoryId
+        - name: minPrice
+          in: query
+          schema:
+            type: string
+        - name: maxPrice
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: seller id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/orders:
+    get:
+      tags:
+        - Seller
+      summary: Orders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/statistics:
+    get:
+      tags:
+        - Seller
+      summary: Statistics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/me:
+    get:
+      tags:
+        - User
+      summary: Me
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/profile:
+    put:
+      tags:
+        - User
+      summary: Update Profile
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phoneNumber:
+                  type: string
+                homeAddress:
+                  type: string
+                homePhoneNumber:
+                  type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/password:
+    put:
+      tags:
+        - User
+      summary: Update Password
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/addresses:
+    post:
+      tags:
+        - User
+      summary: Add Address
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                city:
+                  type: string
+                province:
+                  type: string
+                postalCode:
+                  type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - User
+      summary: Addresses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/addresses/{id}:
+    put:
+      tags:
+        - User
+      summary: Update Address
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                city:
+                  type: string
+                province:
+                  type: string
+                postalCode:
+                  type: string
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: address id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - User
+      summary: Delete Address
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: address id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/addresses/{id}/default:
+    put:
+      tags:
+        - User
+      summary: Set Default Address
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: address id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /comments/{parentType}/{parentId}/comments:
+    post:
+      tags:
+        - Comment
+      summary: Create One
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                rating:
+                  type: string
+                  description: between 1 to 5
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: parentType
+          in: path
+          schema:
+            type: string
+          required: true
+          description: product || blog
+        - name: parentId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: id of the product or blog
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Comment
+      summary: Page Comments
+      parameters:
+        - name: parentType
+          in: path
+          schema:
+            type: string
+          required: true
+          description: product || blog
+        - name: parentId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: id of the product or blog
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /comments/{id}/status:
+    put:
+      tags:
+        - Comment
+      summary: Update Status
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: pending || approved || rejected
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: comment id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /comments/{id}:
+    delete:
+      tags:
+        - Comment
+      summary: Delete One
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+          description: comment id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
