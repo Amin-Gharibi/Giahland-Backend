@@ -6,7 +6,7 @@ const orderSchemas = {
 			"string.guid": "Invalid address ID format",
 			"any.required": "Address ID is required",
 		}),
-		paymentMethod: Joi.string().valid("credit_card", "paypal", "bank_transfer").required().messages({
+		paymentMethod: Joi.string().valid("credit_card", "bank_transfer").required().messages({
 			"any.only": "Invalid payment method",
 			"any.required": "Payment method is required",
 		}),

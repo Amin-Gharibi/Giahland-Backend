@@ -9,11 +9,12 @@ router.use(protect);
 
 // Customer routes
 router.post("/", validateRequest(orderSchemas.create), orderController.createOrder);
-router.get("/my-orders", orderController.getMyOrders);
+router.get("/me", orderController.getMyOrders);
 router.get("/:id", orderController.getOrderById);
 
 // Seller routes
-router.get("/seller-orders", authorize("seller"), orderController.getSellerOrders);
-router.put("/:id/status", authorize("seller"), validateRequest(orderSchemas.updateStatus), orderController.updateOrderStatus);
+router.use(authorize("seller"));
+router.get("/seller-orders", orderController.getSellerOrders);
+router.put("/:id/status", validateRequest(orderSchemas.updateStatus), orderController.updateOrderStatus);
 
 module.exports = router;
