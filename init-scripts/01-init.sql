@@ -7,6 +7,7 @@ CREATE TYPE seller_status AS ENUM ('active', 'pending', 'suspended');
 CREATE TYPE product_status AS ENUM ('active', 'inactive', 'out_of_stock');
 CREATE TYPE comment_status AS ENUM ('pending', 'approved', 'rejected');
 CREATE TYPE comment_parent_type AS ENUM ('blog', 'product');
+CREATE TYPE order_status AS ENUM ('pending', 'processing', 'shipped', 'delivered', 'cancelled');
 
 -- Create Users table
 CREATE TABLE users (
@@ -20,6 +21,8 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     role user_role NOT NULL DEFAULT 'customer',
     profile_image_url TEXT,
+    is_verified BOOLEAN DEFAULT false,
+    verified_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -40,11 +43,10 @@ CREATE TABLE categories (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     fa_name VARCHAR(255) NOT NULL,
     en_name VARCHAR(255) NOT NULL,
-    parent_id uuid REFERENCES categories(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_category_names UNIQUE (fa_name, en_name)
 );
-
 -- Create Products table
 CREATE TABLE products (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -157,6 +159,27 @@ CREATE TABLE addresses (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create Orders table
+CREATE TABLE orders (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id uuid REFERENCES users(id) ON DELETE RESTRICT,
+    address_id uuid REFERENCES addresses(id) ON DELETE RESTRICT,
+    total_amount DECIMAL(12,2) NOT NULL,
+    status order_status DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Order Items table
+CREATE TABLE order_items (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    order_id uuid REFERENCES orders(id) ON DELETE CASCADE,
+    product_id uuid REFERENCES products(id) ON DELETE RESTRICT,
+    quantity INTEGER NOT NULL,
+    price_at_time DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_products_seller ON products(seller_id);
@@ -168,6 +191,10 @@ CREATE INDEX idx_product_images_product ON product_images(product_id);
 CREATE INDEX idx_email_verifications_user ON email_verifications(user_id);
 CREATE INDEX idx_email_verifications_code ON email_verifications(verification_code);
 CREATE INDEX idx_addresses_user_id ON addresses(user_id);
+CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_status ON products(status);
+CREATE INDEX idx_comments_status ON comments(status);
+CREATE INDEX idx_users_name ON users((first_name || ' ' || last_name));
 
 -- Create triggers for checking parent existence in comments
 CREATE OR REPLACE FUNCTION check_comment_parent() RETURNS trigger AS $$
@@ -223,6 +250,20 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
+
+-- Create stock checking when adding item to cart
+CREATE OR REPLACE FUNCTION check_product_stock() RETURNS trigger AS $$
+BEGIN
+    IF (
+        SELECT stock 
+        FROM products 
+        WHERE id = NEW.product_id
+    ) < NEW.quantity THEN
+        RAISE EXCEPTION 'Insufficient stock for product';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Apply updated_at triggers to relevant tables
 CREATE TRIGGER update_users_updated_at
