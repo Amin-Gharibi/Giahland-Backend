@@ -134,14 +134,14 @@ exports.login = async (req, res, next) => {
 		);
 
 		if (result.rows.length === 0) {
-			throw new APIError("Invalid credentials", 401);
+			throw new APIError("Invalid credentials", 400);
 		}
 
 		// Check password
 		const isMatch = await bcrypt.compare(password, result.rows[0].password_hash);
 
 		if (!isMatch) {
-			throw new APIError("Invalid credentials", 401);
+			throw new APIError("Invalid credentials", 400);
 		}
 
 		// Generate access token
