@@ -180,6 +180,17 @@ CREATE TABLE order_items (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create refresh tokens table
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(500) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_revoked BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(token)
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_products_seller ON products(seller_id);
@@ -195,6 +206,9 @@ CREATE INDEX idx_products_name ON products(name);
 CREATE INDEX idx_products_status ON products(status);
 CREATE INDEX idx_comments_status ON comments(status);
 CREATE INDEX idx_users_name ON users((first_name || ' ' || last_name));
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
 
 -- Create triggers for checking parent existence in comments
 CREATE OR REPLACE FUNCTION check_comment_parent() RETURNS trigger AS $$
@@ -263,7 +277,20 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE 'plpgsql';
+
+-- Create clean up function for refresh tokens
+CREATE OR REPLACE FUNCTION cleanup_refresh_tokens()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Delete expired and revoked tokens for the same user
+    DELETE FROM refresh_tokens 
+    WHERE (expires_at < NOW() OR is_revoked = true)
+    AND user_id = NEW.user_id;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
 
 -- Apply updated_at triggers to relevant tables
 CREATE TRIGGER update_users_updated_at
@@ -306,6 +333,11 @@ CREATE TRIGGER update_average_rating_trigger
     FOR EACH ROW
     EXECUTE FUNCTION update_average_rating();
 
+CREATE TRIGGER trigger_cleanup_refresh_tokens
+    AFTER INSERT ON refresh_tokens
+    FOR EACH ROW
+    EXECUTE FUNCTION cleanup_refresh_tokens();
+
 -- Insert default admin user
 INSERT INTO users (
     first_name,
@@ -313,12 +345,16 @@ INSERT INTO users (
     email,
     phone_number,
     password_hash,
-    role
+    role,
+    is_verified,
+    verified_at
 ) VALUES (
     'Admin',
     'User',
     'admin@giahland.com',
     '09123456789',
     '$2a$10$0lzZoLKyhKO0RkO3GLGS9.89OJuGTsDbJwbgV7JL/NuWLqtuvF7kK',
-    'admin'
+    'admin',
+    true,
+    CURRENT_TIMESTAMP
 );

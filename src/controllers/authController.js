@@ -79,20 +79,41 @@ exports.register = async (req, res, next) => {
 			[firstName, lastName, email, hashedPassword, phoneNumber, false]
 		);
 
+		// Generate access token
+		const accessToken = jwt.sign(
+			{
+				id: result.rows[0].id,
+				role: result.rows[0].role,
+			},
+			config.jwt.secret,
+			{ expiresIn: config.jwt.expiresIn }
+		);
+
+		// Generate refresh token
+		const refreshToken = jwt.sign(
+			{
+				id: result.rows[0].id,
+				role: result.rows[0].role,
+				tokenType: "refresh",
+			},
+			config.jwt.refreshSecret,
+			{ expiresIn: config.jwt.refreshExpiresIn }
+		);
+
+		await pool.query(`INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, NOW() + INTERVAL '7 days')`, [result.rows[0].id, refreshToken]);
+
 		// Commit transaction
 		await pool.query("COMMIT");
 
-		// Generate JWT
-		const token = jwt.sign({ id: result.rows[0].id, role: result.rows[0].role }, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
-
 		res.status(201).json({
 			success: true,
-			token,
+			accessToken,
+			refreshToken,
 			user: {
 				id: result.rows[0].id,
 				email: result.rows[0].email,
 				role: result.rows[0].role,
-				isVerified: false,
+				isVerified: result.rows[0].is_verified,
 			},
 		});
 	} catch (error) {
@@ -123,12 +144,33 @@ exports.login = async (req, res, next) => {
 			throw new APIError("Invalid credentials", 401);
 		}
 
-		// Generate JWT
-		const token = jwt.sign({ id: result.rows[0].id, role: result.rows[0].role }, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
+		// Generate access token
+		const accessToken = jwt.sign(
+			{
+				id: result.rows[0].id,
+				role: result.rows[0].role,
+			},
+			config.jwt.secret,
+			{ expiresIn: config.jwt.expiresIn }
+		);
+
+		// Generate refresh token
+		const refreshToken = jwt.sign(
+			{
+				id: result.rows[0].id,
+				role: result.rows[0].role,
+				tokenType: "refresh",
+			},
+			config.jwt.refreshSecret,
+			{ expiresIn: config.jwt.refreshExpiresIn }
+		);
+
+		await pool.query(`INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, NOW() + INTERVAL '7 days')`, [result.rows[0].id, refreshToken]);
 
 		res.json({
 			success: true,
-			token,
+			accessToken,
+			refreshToken,
 			user: {
 				id: result.rows[0].id,
 				email: result.rows[0].email,
@@ -243,15 +285,32 @@ exports.verifyEmail = async (req, res, next) => {
 };
 
 exports.refreshToken = async (req, res, next) => {
-	const { token } = req.body;
-
-	if (!token) {
-		return next(new APIError("Refresh token is required", 400));
-	}
+	const { refreshToken } = req.body;
 
 	try {
 		// Verify the refresh token
-		const decoded = jwt.verify(token, config.jwt.secret);
+		const decoded = jwt.verify(refreshToken, config.jwt.refreshSecret);
+
+		// Validate that this is actually a refresh token
+		if (!decoded.tokenType || decoded.tokenType !== "refresh") {
+			throw new APIError("Invalid refresh token", 401);
+		}
+
+		// Begin transaction
+		await pool.query("BEGIN");
+
+		// Check if token exists and is not revoked in database
+		const tokenResult = await pool.query(
+			`SELECT * FROM refresh_tokens 
+             WHERE token = $1 
+             AND is_revoked = false 
+             AND expires_at > NOW()`,
+			[refreshToken]
+		);
+
+		if (tokenResult.rows.length === 0) {
+			throw new APIError("Invalid or expired refresh token", 401);
+		}
 
 		// Check if the user exists
 		const userResult = await pool.query("SELECT id, email, role FROM users WHERE id = $1", [decoded.id]);
@@ -259,19 +318,47 @@ exports.refreshToken = async (req, res, next) => {
 			throw new APIError("User not found", 404);
 		}
 
+		// Revoke the old refresh token
+		await pool.query("UPDATE refresh_tokens SET is_revoked = true WHERE token = $1", [refreshToken]);
+
 		// Generate a new access token
-		const newToken = jwt.sign({ id: userResult.rows[0].id, role: userResult.rows[0].role }, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
+		const newAccessToken = jwt.sign(
+			{
+				id: userResult.rows[0].id,
+				role: userResult.rows[0].role,
+			},
+			config.jwt.secret,
+			{ expiresIn: config.jwt.expiresIn }
+		);
+
+		// Generate a new refresh token
+		const newRefreshToken = jwt.sign(
+			{
+				id: result.rows[0].id,
+				role: result.rows[0].role,
+				tokenType: "refresh",
+			},
+			config.jwt.refreshSecret,
+			{ expiresIn: config.jwt.refreshExpiresIn }
+		);
+
+		// Store new refresh token in database
+		await pool.query(
+			`INSERT INTO refresh_tokens (user_id, token, expires_at)
+             VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+			[userResult.rows[0].id, newRefreshToken]
+		);
+
+		// Commit transaction
+		await pool.query("COMMIT");
 
 		res.json({
 			success: true,
-			token: newToken,
-			user: {
-				id: userResult.rows[0].id,
-				email: userResult.rows[0].email,
-				role: userResult.rows[0].role,
-			},
+			accessToken: newAccessToken,
+			refreshToken: newRefreshToken,
 		});
 	} catch (err) {
+		await pool.query("ROLLBACK");
 		return next(new APIError("Invalid refresh token", 401));
 	}
 };
@@ -291,7 +378,7 @@ exports.forgotPassword = async (req, res, next) => {
 		const resetToken = jwt.sign({ id: result.rows[0].id }, config.jwt.secret, { expiresIn: "1h" });
 
 		// Send reset token via email
-        sendForgotPasswordToken(email, resetToken)
+		sendForgotPasswordToken(email, resetToken);
 
 		res.json({
 			success: true,

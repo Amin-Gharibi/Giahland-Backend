@@ -52,7 +52,7 @@ const authSchemas = {
 	}),
 
 	refreshToken: Joi.object({
-		token: Joi.string().required().messages({
+		refreshToken: Joi.string().required().messages({
 			"any.required": "Refresh token is required",
 		}),
 	}),

@@ -1,7 +1,8 @@
 class APIError extends Error {
-	constructor(message, statusCode) {
+	constructor(message, statusCode, details = null) {
 		super(message);
 		this.statusCode = statusCode;
+		this.details = details;
 	}
 }
 
@@ -11,6 +12,7 @@ const errorHandler = (err, req, res, next) => {
 
 	// Log to console for dev
 	console.log(err.stack);
+	console.log("Details => ", err.details);
 
 	if (err.name === "CastError") {
 		const message = `Resource not found`;

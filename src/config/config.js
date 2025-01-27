@@ -19,8 +19,10 @@ const config = {
 
 	// JWT configuration
 	jwt: {
-		secret: process.env.JWT_SECRET || "your-secret-key",
-		expiresIn: process.env.JWT_EXPIRE || "24h",
+		secret: process.env.JWT_SECRET || "secret-key",
+		expiresIn: process.env.JWT_EXPIRE || "15m",
+		refreshSecret: process.env.JWT_REFRESH_SECRET || "refresh-secret-key",
+		refreshExpiresIn: process.env.JWT_REFRESH_EXPIRE || "7d",
 	},
 
 	// CORS configuration
@@ -51,7 +53,7 @@ const config = {
 		user: process.env.EMAIL_USER,
 		password: process.env.EMAIL_PASSWORD,
 		from: process.env.EMAIL_FROM,
-	}
+	},
 };
 
 // Validate required configuration
