@@ -52,7 +52,7 @@ exports.register = async (req, res, next) => {
 
 	try {
 		// Check if user exists
-		const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+		const userExists = await pool.query("SELECT * FROM users WHERE email = $1 OR phone_number = $2", [email, phoneNumber]);
 
 		if (userExists.rows.length > 0) {
 			throw new APIError("User already exists", 400);
