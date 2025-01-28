@@ -334,8 +334,8 @@ exports.refreshToken = async (req, res, next) => {
 		// Generate a new refresh token
 		const newRefreshToken = jwt.sign(
 			{
-				id: result.rows[0].id,
-				role: result.rows[0].role,
+				id: userResult.rows[0].id,
+				role: userResult.rows[0].role,
 				tokenType: "refresh",
 			},
 			config.jwt.refreshSecret,
