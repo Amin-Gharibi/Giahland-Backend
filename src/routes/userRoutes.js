@@ -12,6 +12,7 @@ router.put("/profile", validateRequest(userSchemas.updateProfile), userControlle
 router.put("/password", validateRequest(userSchemas.updatePassword), userController.updatePassword);
 router.get("/addresses", userController.getAddresses);
 router.post("/addresses", validateRequest(userSchemas.createAddress), userController.createAddress);
+router.get("/addresses/:id", userController.getAddressById);
 router.put("/addresses/:id", validateRequest(userSchemas.updateAddress), userController.updateAddress);
 router.delete("/addresses/:id", userController.deleteAddress);
 router.put("/addresses/:id/default", userController.setDefaultAddress);

@@ -131,6 +131,28 @@ exports.getAddresses = async (req, res, next) => {
 	}
 };
 
+exports.getAddressById = async (req, res, next) => {
+	try {
+		const result = await pool.query(
+			`SELECT *
+             FROM addresses 
+             WHERE user_id = $1 AND id = $2`,
+			[req.user.id, req.params.id]
+		);
+
+		if (result.rows.length === 0) {
+			throw new APIError("Address not found", 404);
+		}
+
+		res.json({
+			success: true,
+			data: result.rows[0],
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 exports.createAddress = async (req, res, next) => {
 	const { address, city, province, postalCode, isDefault = false } = req.body;
 
