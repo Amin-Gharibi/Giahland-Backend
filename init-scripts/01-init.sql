@@ -285,8 +285,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Delete expired and revoked tokens for the same user
     DELETE FROM refresh_tokens 
-    WHERE (expires_at < NOW() OR is_revoked = true)
-    AND user_id = NEW.user_id;
+    WHERE (expires_at < NOW() OR is_revoked = true);
     
     RETURN NEW;
 END;

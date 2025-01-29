@@ -88,7 +88,7 @@ exports.updatePassword = async (req, res, next) => {
 		// Check current password
 		const isMatch = await bcrypt.compare(currentPassword, user.rows[0].password_hash);
 		if (!isMatch) {
-			throw new APIError("Current password is incorrect", 401);
+			throw new APIError("Current password is incorrect", 400);
 		}
 
 		// Hash new password

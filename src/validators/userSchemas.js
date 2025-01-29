@@ -15,11 +15,12 @@ const userSchemas = {
 			.messages({
 				"string.pattern.base": "Phone number must be a valid Iranian mobile number",
 			}),
-		homeAddress: Joi.string().max(500).messages({
+		homeAddress: Joi.string().max(500).allow("", null).messages({
 			"string.max": "Home address cannot exceed 500 characters",
 		}),
 		homePhoneNumber: Joi.string()
 			.pattern(/^0[0-9]{10}$/)
+			.allow("", null)
 			.messages({
 				"string.pattern.base": "Home phone number must be a valid Iranian phone number",
 			}),

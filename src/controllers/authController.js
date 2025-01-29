@@ -321,6 +321,8 @@ exports.refreshToken = async (req, res, next) => {
 		// Revoke the old refresh token
 		await pool.query("UPDATE refresh_tokens SET is_revoked = true WHERE token = $1", [refreshToken]);
 
+		await pool.query("DELETE FROM refresh_tokens WHERE user_id = $1", [userResult.rows[0].id])
+
 		// Generate a new access token
 		const newAccessToken = jwt.sign(
 			{
@@ -359,6 +361,7 @@ exports.refreshToken = async (req, res, next) => {
 		});
 	} catch (err) {
 		await pool.query("ROLLBACK");
+		console.log(err)
 		return next(new APIError("Invalid refresh token", 401));
 	}
 };
