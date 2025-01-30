@@ -49,6 +49,7 @@ const sendForgotPasswordToken = async (email, token) => {
 
 exports.register = async (req, res, next) => {
 	const { firstName, lastName, email, password, phoneNumber } = req.body;
+	const defaultProfileImageUrl = `${config.upload.path}/default-avatar.png`;
 
 	try {
 		// Check if user exists
@@ -73,10 +74,11 @@ exports.register = async (req, res, next) => {
                 email, 
                 password_hash, 
                 phone_number,
-                is_verified
-            ) VALUES ($1, $2, $3, $4, $5, $6) 
-            RETURNING id, email, role`,
-			[firstName, lastName, email, hashedPassword, phoneNumber, false]
+                is_verified,
+				profile_image_url
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7) 
+            RETURNING id, email, role, profile_image_url`,
+			[firstName, lastName, email, hashedPassword, phoneNumber, false, defaultProfileImageUrl]
 		);
 
 		// Generate access token

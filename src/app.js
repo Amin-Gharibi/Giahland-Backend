@@ -3,7 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
-const {errorHandler} = require("./middlewares/errorHandler");
+const { errorHandler } = require("./middlewares/errorHandler");
 const swaggerUi = require("swagger-ui-express");
 const yaml = require("js-yaml");
 const fs = require("fs");
@@ -17,7 +17,12 @@ const indexRoutes = require("./routes/index");
 const app = express();
 
 // Middleware
-app.use(helmet());
+app.use(
+	helmet({
+		crossOriginResourcePolicy: { policy: "cross-origin" },
+		crossOriginEmbedderPolicy: false,
+	})
+);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -31,7 +36,10 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Swagger setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// Medias route
+app.use("/uploads", express.static(path.join(__dirname, "../", "uploads")));
 
 // Routes
 app.use("/api", indexRoutes);

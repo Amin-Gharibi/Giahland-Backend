@@ -1,6 +1,9 @@
 const pool = require("../config/database");
 const bcrypt = require("bcryptjs");
+const path = require("path");
+const fs = require("fs").promises;
 const { APIError } = require("../middlewares/errorHandler");
+const { upload } = require("../config/config");
 
 exports.getMe = async (req, res, next) => {
 	try {
@@ -65,10 +68,10 @@ exports.updateProfile = async (req, res, next) => {
 		}
 
 		if (phoneNumber !== req.user.phoneNumber) {
-			const phoneNumberExists = await pool.query(`SELECT * FROM users WHERE phone_number = $1 AND id != $2`, [phoneNumber, req.user.id])
+			const phoneNumberExists = await pool.query(`SELECT * FROM users WHERE phone_number = $1 AND id != $2`, [phoneNumber, req.user.id]);
 
 			if (phoneNumberExists.rows.length > 0) {
-				throw new APIError("Phone Number already in use", 400)
+				throw new APIError("Phone Number already in use", 400);
 			}
 		}
 
@@ -316,6 +319,80 @@ exports.deleteAddress = async (req, res, next) => {
 			message: "Address deleted successfully",
 		});
 	} catch (error) {
+		next(error);
+	}
+};
+
+exports.uploadProfilePhoto = async (req, res, next) => {
+	try {
+		if (!req.file) {
+			throw new APIError("Please upload a file", 400);
+		}
+
+		// Get the old profile photo URL if it exists
+		const oldPhoto = await pool.query("SELECT profile_image_url FROM users WHERE id = $1", [req.user.id]);
+
+		// Create the URL for the uploaded file
+		const fileUrl = `/${upload.path}/${req.file.filename}`;
+
+		// Update the database with the new photo URL
+		const result = await pool.query(
+			`UPDATE users 
+             SET profile_image_url = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2
+             RETURNING profile_image_url`,
+			[fileUrl, req.user.id]
+		);
+
+		// Only delete the old photo if it's not the default photo
+		if (oldPhoto.rows[0]?.profile_image_url && !oldPhoto.rows[0].profile_image_url.includes("default-avatar")) {
+			const oldFilePath = path.join(__dirname, "../..", oldPhoto.rows[0].profile_image_url);
+			await fs.unlink(oldFilePath).catch((err) => console.error("Error deleting old profile photo:", err));
+		}
+
+		res.json({
+			success: true,
+			data: {
+				profile_image_url: result.rows[0].profile_image_url,
+			},
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.deleteProfilePhoto = async (req, res, next) => {
+	try {
+		const defaultProfileImageUrl = `/${upload.path}/default-avatar.png`;
+
+		// Get the current profile photo URL
+		const result = await pool.query("SELECT profile_image_url FROM users WHERE id = $1", [req.user.id]);
+
+		// Only delete if it's not the default photo
+		if (result.rows[0]?.profile_image_url && !result.rows[0].profile_image_url.includes("default-avatar")) {
+			const filePath = path.join(__dirname, "../..", result.rows[0].profile_image_url);
+
+			try {
+				await fs.unlink(filePath);
+			} catch (unlinkError) {
+				console.error("Error deleting profile photo:", unlinkError);
+			}
+		}
+
+		// Update the database to set the default photo URL
+		await pool.query(
+			`UPDATE users 
+             SET profile_image_url = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+			[defaultProfileImageUrl, req.user.id]
+		);
+
+		res.json({
+			success: true,
+			message: "Profile photo reset to default successfully",
+		});
+	} catch (error) {
+		console.error("Error in deleteProfilePhoto:", error);
 		next(error);
 	}
 };
