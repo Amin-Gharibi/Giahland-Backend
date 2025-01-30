@@ -186,7 +186,7 @@ exports.login = async (req, res, next) => {
 exports.requestVerificationCode = async (req, res, next) => {
 	try {
 		// Get user
-		const user = await pool.query("SELECT id, is_verified FROM users WHERE email = $1", [email]);
+		const user = await pool.query("SELECT id, is_verified FROM users WHERE email = $1", [req.user.email]);
 
 		if (user.rows.length === 0) {
 			throw new APIError("User not found", 404);
@@ -222,7 +222,7 @@ exports.requestVerificationCode = async (req, res, next) => {
                 verification_code, 
                 expires_at
             ) VALUES ($1, $2, $3)`,
-			[result.rows[0].id, verificationCode, expiresAt]
+			[user.rows[0].id, verificationCode, expiresAt]
 		);
 
 		// Commit transaction

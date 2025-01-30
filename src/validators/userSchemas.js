@@ -15,6 +15,9 @@ const userSchemas = {
 			.messages({
 				"string.pattern.base": "Phone number must be a valid Iranian mobile number",
 			}),
+		email: Joi.string().email().messages({
+			"string.email": "Please provide a valid email address",
+		}),
 		homeAddress: Joi.string().max(500).allow("", null).messages({
 			"string.max": "Home address cannot exceed 500 characters",
 		}),

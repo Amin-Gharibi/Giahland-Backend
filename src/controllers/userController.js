@@ -15,6 +15,7 @@ exports.getMe = async (req, res, next) => {
                 home_phone_number, 
                 role, 
                 profile_image_url,
+				is_verified,
                 created_at,
                 updated_at
              FROM users 
@@ -48,21 +49,43 @@ exports.getMe = async (req, res, next) => {
 };
 
 exports.updateProfile = async (req, res, next) => {
-	const { firstName, lastName, phoneNumber, homeAddress, homePhoneNumber } = req.body;
+	const { firstName, lastName, phoneNumber, email, homeAddress, homePhoneNumber } = req.body;
 
 	try {
+		const emailChanged = req.user.email !== email;
+
+		const isVerified = emailChanged ? false : req.user.is_verified;
+
+		if (emailChanged) {
+			const emailExists = await pool.query(`SELECT * FROM users WHERE email = $1 AND id != $2`, [email, req.user.id]);
+
+			if (emailExists.rows.length > 0) {
+				throw new APIError("Email already in use", 400);
+			}
+		}
+
+		if (phoneNumber !== req.user.phoneNumber) {
+			const phoneNumberExists = await pool.query(`SELECT * FROM users WHERE phone_number = $1 AND id != $2`, [phoneNumber, req.user.id])
+
+			if (phoneNumberExists.rows.length > 0) {
+				throw new APIError("Phone Number already in use", 400)
+			}
+		}
+
 		const result = await pool.query(
 			`UPDATE users 
              SET 
                 first_name = COALESCE($1, first_name),
                 last_name = COALESCE($2, last_name),
                 phone_number = COALESCE($3, phone_number),
-                home_address = COALESCE($4, home_address),
-                home_phone_number = COALESCE($5, home_phone_number),
+				email = COALESCE($4, email),
+                home_address = COALESCE($5, home_address),
+                home_phone_number = COALESCE($6, home_phone_number),
+				is_verified = $7,
                 updated_at = CURRENT_TIMESTAMP
-             WHERE id = $6
-             RETURNING id, first_name, last_name, email, phone_number, home_address, home_phone_number, role`,
-			[firstName, lastName, phoneNumber, homeAddress, homePhoneNumber, req.user.id]
+             WHERE id = $8
+             RETURNING id, first_name, last_name, email, phone_number, email, home_address, home_phone_number, is_verified, role`,
+			[firstName, lastName, phoneNumber, email, homeAddress, homePhoneNumber, isVerified, req.user.id]
 		);
 
 		if (result.rows.length === 0) {
