@@ -41,10 +41,10 @@ exports.createOrder = async (req, res, next) => {
 exports.getMyOrders = async (req, res, next) => {
 	try {
 		const result = await pool.query(
-			`SELECT o.*, a.address, a.city, a.state, a.postal_code, a.country 
-             FROM orders o 
-             JOIN addresses a ON o.address_id = a.id 
-             WHERE o.user_id = $1`,
+			`SELECT o.*, a.address, a.city, a.province, a.postal_code 
+     		 FROM orders o 
+     		 JOIN addresses a ON o.address_id = a.id 
+     		 WHERE o.user_id = $1`,
 			[req.user.id]
 		);
 		res.json({
@@ -59,10 +59,10 @@ exports.getMyOrders = async (req, res, next) => {
 exports.getOrderById = async (req, res, next) => {
 	try {
 		const result = await pool.query(
-			`SELECT o.*, a.address, a.city, a.state, a.postal_code, a.country 
-             FROM orders o 
-             JOIN addresses a ON o.address_id = a.id 
-             WHERE o.id = $1 AND o.user_id = $2`,
+			`SELECT o.*, a.address, a.city, a.province, a.postal_code 
+     		 FROM orders o 
+     		 JOIN addresses a ON o.address_id = a.id 
+     		 WHERE o.id = $1 AND o.user_id = $2`,
 			[req.params.id, req.user.id]
 		);
 		if (result.rows.length === 0) {
@@ -80,13 +80,13 @@ exports.getOrderById = async (req, res, next) => {
 exports.getSellerOrders = async (req, res, next) => {
 	try {
 		const result = await pool.query(
-			`SELECT o.*, u.first_name, u.last_name, a.address, a.city, a.state, a.postal_code, a.country 
-             FROM orders o 
-             JOIN users u ON o.user_id = u.id 
-             JOIN addresses a ON o.address_id = a.id 
-             JOIN order_items oi ON o.id = oi.order_id 
-             JOIN products p ON oi.product_id = p.id 
-             WHERE p.seller_id = $1`,
+			`SELECT o.*, u.first_name, u.last_name, a.address, a.city, a.province, a.postal_code 
+ 			 FROM orders o 
+ 			 JOIN users u ON o.user_id = u.id 
+ 			 JOIN addresses a ON o.address_id = a.id 
+ 			 JOIN order_items oi ON o.id = oi.order_id 
+ 			 JOIN products p ON oi.product_id = p.id 
+ 			 WHERE p.seller_id = $1`,
 			[req.user.id]
 		);
 		res.json({
