@@ -13,11 +13,10 @@ router.get("/:id/products", sellerController.getSellerProducts);
 router.use(protect);
 
 // Seller routes
-router.use(authorize("seller"));
-router.get("/profile", sellerController.getProfile);
-router.put("/profile", validateRequest(sellerSchemas.updateProfile), sellerController.updateProfile);
-router.get("/orders", sellerController.getOrders);
-router.get("/statistics", sellerController.getStatistics);
+router.get("/profile", authorize("seller"), sellerController.getProfile);
+router.put("/profile", authorize("seller"), validateRequest(sellerSchemas.updateProfile), sellerController.updateProfile);
+router.get("/orders", authorize("seller"), sellerController.getOrders);
+router.get("/statistics", authorize("seller"), sellerController.getStatistics);
 
 // Admin routes
 router.use(authorize("admin"));

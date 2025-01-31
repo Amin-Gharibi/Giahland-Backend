@@ -49,7 +49,7 @@ const sendForgotPasswordToken = async (email, token) => {
 
 exports.register = async (req, res, next) => {
 	const { firstName, lastName, email, password, phoneNumber } = req.body;
-	const defaultProfileImageUrl = `${config.upload.path}/default-avatar.png`;
+	const defaultProfileImageUrl = `/${config.upload.path}/default-avatar.png`;
 
 	try {
 		// Check if user exists

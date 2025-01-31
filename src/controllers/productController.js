@@ -1,5 +1,8 @@
 const pool = require("../config/database");
 const { APIError } = require("../middlewares/errorHandler");
+const fs = require("fs");
+const path = require("path");
+
 exports.getProducts = async (req, res, next) => {
 	try {
 		const { limit = 10, offset = 0, category, minPrice, maxPrice, sortBy = "created_at", order = "DESC" } = req.query;
@@ -436,11 +439,15 @@ exports.uploadImages = async (req, res, next) => {
 	}
 
 	try {
+		await pool.query("BEGIN");
+
 		const productResult = await pool.query(
-			`SELECT p.* 
-             FROM products p
-             JOIN sellers s ON p.seller_id = s.id
-             WHERE p.id = $1 AND s.user_id = $2`,
+			`SELECT p.*, COUNT(pi.id) AS image_count 
+             FROM products p 
+             LEFT JOIN product_images pi ON pi.product_id = p.id 
+             JOIN sellers s ON p.seller_id = s.id 
+             WHERE p.id = $1 AND s.user_id = $2 
+             GROUP BY p.id`,
 			[id, req.user.id]
 		);
 
@@ -448,19 +455,37 @@ exports.uploadImages = async (req, res, next) => {
 			throw new APIError("Product not found or you don't have permission to update it", 404);
 		}
 
-		const imageValues = images.map((image) => `(${id}, ${pool.escape(image.filename)}, ${pool.escape(image.path)}, FALSE)`).join(",");
+		const imageParams = [];
+		let setMainImage = +productResult.rows[0].image_count === 0;
+		const imagePlaceholders = images
+			.map((image, index) => {
+				imageParams.push(id, "/uploads/" + image.filename, setMainImage);
+				setMainImage = false;
+				return `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`;
+			})
+			.join(",");
 
-		await pool.query(`
-            INSERT INTO product_images (product_id, filename, image_url, is_main)
-            VALUES ${imageValues}
-        `);
+		await pool.query(
+			`INSERT INTO product_images (product_id, image_url, is_main) 
+             VALUES ${imagePlaceholders}`,
+			imageParams
+		);
+
+		await pool.query("COMMIT");
 
 		res.status(201).json({
 			success: true,
 			message: "Images uploaded successfully",
-			images: images.map((image) => ({ filename: image.filename, path: image.path })),
 		});
 	} catch (error) {
+		await pool.query("ROLLBACK");
+		req.files.forEach((file) => {
+			fs.unlink(path.join("..", "..", file.path), (err) => {
+				if (err) {
+					console.error(`Error deleting file: ${file.path}`, err);
+				}
+			});
+		});
 		next(error);
 	}
 };
@@ -469,85 +494,55 @@ exports.deleteImage = async (req, res, next) => {
 	try {
 		const { id, imageId } = req.params;
 
-		const result = await pool.query(
-			`DELETE FROM product_images 
-             WHERE id = $1 AND product_id = $2 
-             RETURNING id`,
+		const imageResult = await pool.query(
+			`SELECT id, is_main, image_url 
+             FROM product_images 
+             WHERE id = $1 AND product_id = $2`,
 			[imageId, id]
 		);
 
-		if (result.rows.length === 0) {
+		console.log(imageResult.rows[0]);
+
+		if (imageResult.rows.length === 0) {
 			throw new APIError("Image not found or you don't have permission to delete it", 404);
 		}
+
+		await pool.query("BEGIN");
+
+		await pool.query(
+			`DELETE FROM product_images 
+             WHERE id = $1 AND product_id = $2`,
+			[imageId, id]
+		);
+
+		if (imageResult.rows[0].is_main) {
+			const newMainImage = await pool.query(
+				`UPDATE product_images 
+                 SET is_main = true 
+                 WHERE id = (
+                     SELECT id FROM product_images 
+                     WHERE product_id = $1 
+                     ORDER BY id ASC 
+                     LIMIT 1
+                 ) RETURNING id`,
+				[id]
+			);
+		}
+
+		fs.unlink(path.join("..", "..", imageResult.rows[0].image_url), (err) => {
+			if (err) {
+				console.error(`Error deleting file: ${imageResult.rows[0].image_url}`, err);
+			}
+		});
+
+		await pool.query("COMMIT");
 
 		res.json({
 			success: true,
 			message: "Image deleted successfully",
 		});
 	} catch (error) {
-		next(error);
-	}
-};
-
-exports.getFeaturedProducts = async (req, res, next) => {
-	try {
-		const result = await pool.query(`
-            SELECT 
-                p.id,
-                p.name,
-                p.price,
-                p.description,
-                p.stock,
-                p.status,
-                p.created_at,
-                p.updated_at,
-                s.shop_name as seller_name,
-                s.rating as seller_rating,
-                (
-                    SELECT json_agg(
-                        json_build_object(
-                            'id', c.id,
-                            'fa_name', c.fa_name,
-                            'en_name', c.en_name
-                        )
-                    )
-                    FROM categories c
-                    JOIN product_categories pc ON c.id = pc.category_id
-                    WHERE pc.product_id = p.id
-                ) as categories,
-                (
-                    SELECT json_agg(
-                        json_build_object(
-                            'id', pi.id,
-                            'image_url', pi.image_url,
-                            'is_main', pi.is_main
-                        )
-                    )
-                    FROM product_images pi
-                    WHERE pi.product_id = p.id
-                ) as images,
-                (
-                    SELECT json_agg(
-                        json_build_object(
-                            'name', pf.name,
-                            'value', pf.value
-                        )
-                    )
-                    FROM product_features pf
-                    WHERE pf.product_id = p.id
-                ) as features
-            FROM products p
-            LEFT JOIN sellers s ON p.seller_id = s.id
-            WHERE p.is_featured = TRUE AND p.status = 'active'
-            GROUP BY p.id, s.shop_name, s.rating
-            ORDER BY p.created_at DESC
-            LIMIT 10`);
-
-		res.json({
-			success: true,
-			data: result.rows,
-		});
-	} catch (error) {
+		await pool.query("ROLLBACK");
 		next(error);
 	}
 };
@@ -602,69 +597,6 @@ exports.getNewArrivals = async (req, res, next) => {
             FROM products p
             LEFT JOIN sellers s ON p.seller_id = s.id
             WHERE p.status = 'active'
-            GROUP BY p.id, s.shop_name, s.rating
-            ORDER BY p.created_at DESC
-            LIMIT 10`);
-
-		res.json({
-			success: true,
-			data: result.rows,
-		});
-	} catch (error) {
-		next(error);
-	}
-};
-
-exports.getBestSellers = async (req, res, next) => {
-	try {
-		const result = await pool.query(`
-            SELECT 
-                p.id,
-                p.name,
-                p.price,
-                p.description,
-                p.stock,
-                p.status,
-                p.created_at,
-                p.updated_at,
-                s.shop_name as seller_name,
-                s.rating as seller_rating,
-                (
-                    SELECT json_agg(
-                        json_build_object(
-                            'id', c.id,
-                            'fa_name', c.fa_name,
-                            'en_name', c.en_name
-                        )
-                    )
-                    FROM categories c
-                    JOIN product_categories pc ON c.id = pc.category_id
-                    WHERE pc.product_id = p.id
-                ) as categories,
-                (
-                    SELECT json_agg(
-                        json_build_object(
-                            'id', pi.id,
-                            'image_url', pi.image_url,
-                            'is_main', pi.is_main
-                        )
-                    )
-                    FROM product_images pi
-                    WHERE pi.product_id = p.id
-                ) as images,
-                (
-                    SELECT json_agg(
-                        json_build_object(
-                            'name', pf.name,
-                            'value', pf.value
-                        )
-                    )
-                    FROM product_features pf
-                    WHERE pf.product_id = p.id
-                ) as features
-            FROM products p
-            LEFT JOIN sellers s ON p.seller_id = s.id
-            WHERE p.is_best_seller = TRUE AND p.status = 'active'
             GROUP BY p.id, s.shop_name, s.rating
             ORDER BY p.created_at DESC
             LIMIT 10`);

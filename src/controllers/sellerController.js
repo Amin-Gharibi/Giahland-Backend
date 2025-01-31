@@ -268,10 +268,14 @@ exports.getSellerPublicProfile = async (req, res, next) => {
 
 exports.getSellerProducts = async (req, res, next) => {
 	try {
-		const { limit = 10, offset = 0, sortBy = "created_at", order = "DESC", status, category, minPrice, maxPrice, search } = req.query;
+		let { limit = 10, offset = 0, sortBy = "created_at", order = "DESC", status, category, minPrice, maxPrice, search } = req.query;
+
+		// Convert and validate pagination parameters
+		limit = parseInt(limit) || 10;
+		offset = parseInt(offset) || 0;
 
 		const params = [req.params.id]; // Start with seller ID
-		let whereClause = "WHERE s.id = $1";
+		let whereClause = "WHERE p.seller_id = $1";
 		let paramCount = 1;
 
 		// Add status filter
@@ -285,18 +289,22 @@ exports.getSellerProducts = async (req, res, next) => {
 		if (category) {
 			paramCount++;
 			params.push(category);
-			whereClause += ` AND p.category_id = $${paramCount}`;
+			whereClause += ` AND EXISTS (
+        SELECT 1 FROM product_categories pc 
+        WHERE pc.product_id = p.id 
+        AND pc.category_id = $${paramCount}
+      )`;
 		}
 
-		// Add price range filter
-		if (minPrice !== undefined) {
+		// Add price range filter with validation
+		if (minPrice !== undefined && minPrice !== "") {
 			paramCount++;
-			params.push(minPrice);
+			params.push(parseFloat(minPrice) || 0);
 			whereClause += ` AND p.price >= $${paramCount}`;
 		}
-		if (maxPrice !== undefined) {
+		if (maxPrice !== undefined && maxPrice !== "") {
 			paramCount++;
-			params.push(maxPrice);
+			params.push(parseFloat(maxPrice) || 0);
 			whereClause += ` AND p.price <= $${paramCount}`;
 		}
 
@@ -304,11 +312,11 @@ exports.getSellerProducts = async (req, res, next) => {
 		if (search) {
 			paramCount++;
 			params.push(`%${search}%`);
-			whereClause += ` AND (p.title ILIKE $${paramCount} OR p.description ILIKE $${paramCount})`;
+			whereClause += ` AND (p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount})`;
 		}
 
 		// Validate sortBy to prevent SQL injection
-		const allowedSortFields = ["created_at", "title", "price", "stock", "status"];
+		const allowedSortFields = ["created_at", "name", "price", "stock", "status"];
 		const allowedOrders = ["ASC", "DESC"];
 
 		if (!allowedSortFields.includes(sortBy)) {
@@ -318,73 +326,74 @@ exports.getSellerProducts = async (req, res, next) => {
 			throw new APIError("Invalid sort order", 400);
 		}
 
-		// Get total count for pagination
+		// Get total count WITH THE SAME FILTERS
 		const countQuery = `
-            SELECT COUNT(*)
-            FROM products p
-            JOIN sellers s ON p.seller_id = s.id
-            ${whereClause}
-        `;
-		const totalCount = await pool.query(countQuery, params);
+      SELECT COUNT(*) 
+      FROM products p
+      ${whereClause}
+    `;
+		const totalCount = await pool.query(countQuery, params.slice(0, paramCount)); // Use existing params without limit/offset
 
 		// Add pagination parameters
 		params.push(limit, offset);
 
+		// Corrected placeholder indices for LIMIT and OFFSET
+		const limitPlaceholder = paramCount + 1;
+		const offsetPlaceholder = paramCount + 2;
+
 		// Get products with pagination and related data
 		const query = `
-            SELECT 
-                p.id,
-                p.title,
-                p.description,
-                p.price,
-                p.stock,
-                p.status,
-                p.is_featured,
-                p.is_best_seller,
-                p.created_at,
-                p.updated_at,
-                c.id as category_id,
-                c.fa_name as category_name,
-                c.en_name as category_name_en,
-                (
-                    SELECT json_agg(json_build_object(
-                        'id', pi.id,
-                        'url', pi.image_url,
-                        'is_main', pi.is_main
-                    ))
-                    FROM product_images pi
-                    WHERE pi.product_id = p.id
-                ) as images,
-                (
-                    SELECT json_agg(json_build_object(
-                        'name', pf.name,
-                        'value', pf.value
-                    ))
-                    FROM product_features pf
-                    WHERE pf.product_id = p.id
-                ) as features,
-                (
-                    SELECT COUNT(*)
-                    FROM order_items oi
-                    WHERE oi.product_id = p.id
-                ) as total_orders,
-                (
-                    SELECT COALESCE(AVG(r.rating), 0)
-                    FROM reviews r
-                    WHERE r.product_id = p.id
-                ) as average_rating,
-                (
-                    SELECT COUNT(*)
-                    FROM reviews r
-                    WHERE r.product_id = p.id
-                ) as review_count
-            FROM products p
-            JOIN sellers s ON p.seller_id = s.id
-            LEFT JOIN categories c ON p.category_id = c.id
-            ${whereClause}
-            ORDER BY p.${sortBy} ${order}
-            LIMIT $${params.length - 1} OFFSET $${params.length}
-        `;
+      SELECT 
+        p.id,
+        p.name as title,
+        p.description,
+        p.price,
+        p.stock,
+        p.status,
+        p.created_at,
+        p.updated_at,
+        s.shop_name as seller_name,
+        s.rating as seller_rating,
+        COALESCE(
+          (
+            SELECT array_agg(
+              json_build_object(
+                'id', c.id,
+                'fa_name', c.fa_name,
+                'en_name', c.en_name
+              )
+            )
+            FROM categories c
+            JOIN product_categories pc ON c.id = pc.category_id
+            WHERE pc.product_id = p.id
+          ),
+          ARRAY[]::json[]
+        ) as categories,
+        COALESCE(
+          (
+            SELECT array_agg(
+              json_build_object(
+                'id', pi.id,
+                'url', pi.image_url,
+                'is_main', pi.is_main
+              )
+            )
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+          ),
+          ARRAY[]::json[]
+        ) as images,
+        (
+          SELECT COUNT(*)
+          FROM order_items oi
+          WHERE oi.product_id = p.id
+        ) as total_orders
+      FROM products p
+      LEFT JOIN sellers s ON p.seller_id = s.id
+      ${whereClause}
+      ORDER BY p.${sortBy} ${order}
+      LIMIT $${limitPlaceholder} OFFSET $${offsetPlaceholder}
+    `;
 
 		const result = await pool.query(query, params);
 
@@ -394,13 +403,14 @@ exports.getSellerProducts = async (req, res, next) => {
 				products: result.rows.map((product) => ({
 					...product,
 					images: product.images || [],
-					features: product.features || [],
-					description: product.description.substring(0, 200) + (product.description.length > 200 ? "..." : ""), // Truncate description
+					categories: product.categories || [],
+					description: product.description?.substring(0, 200) + (product.description?.length > 200 ? "..." : ""),
 				})),
 				pagination: {
 					total: parseInt(totalCount.rows[0].count),
 					totalPages: Math.ceil(totalCount.rows[0].count / limit),
 					limit: parseInt(limit),
+					offset: parseInt(offset),
 				},
 			},
 		});
