@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middlewares/auth");
+const { protect, authorize } = require("../middlewares/auth");
 const userController = require("../controllers/userController");
 const validateRequest = require("../middlewares/validateRequest");
 const userSchemas = require("../validators/userSchemas");
@@ -19,5 +19,8 @@ router.delete("/addresses/:id", userController.deleteAddress);
 router.put("/addresses/:id/default", userController.setDefaultAddress);
 router.post("/profile-photo", upload.single("photo"), userController.uploadProfilePhoto);
 router.delete("/profile-photo", userController.deleteProfilePhoto);
+
+router.use(authorize("admin"));
+router.get("/", userController.getUsers);
 
 module.exports = router;

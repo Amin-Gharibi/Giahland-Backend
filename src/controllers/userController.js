@@ -396,3 +396,111 @@ exports.deleteProfilePhoto = async (req, res, next) => {
 		next(error);
 	}
 };
+
+exports.getUsers = async (req, res, next) => {
+	try {
+		const { limit = 10, offset = 0, sortBy = "created_at", order = "DESC", role, isVerified, search } = req.query;
+
+		// Build query parameters and where clause
+		const params = [];
+		let whereClause = [];
+
+		// Add role filter if provided
+		if (role) {
+			params.push(role);
+			whereClause.push(`role = $${params.length}`);
+		}
+
+		// Add verification status filter if provided
+		if (isVerified !== undefined) {
+			params.push(isVerified === "true");
+			whereClause.push(`is_verified = $${params.length}`);
+		}
+
+		// Add search filter if provided
+		if (search) {
+			params.push(`%${search}%`);
+			whereClause.push(`(
+                first_name ILIKE $${params.length} OR 
+                last_name ILIKE $${params.length} OR 
+                email ILIKE $${params.length} OR 
+                phone_number ILIKE $${params.length}
+            )`);
+		}
+
+		// Combine where clauses
+		const whereStatement = whereClause.length > 0 ? "WHERE " + whereClause.join(" AND ") : "";
+
+		// Validate sortBy to prevent SQL injection
+		const allowedSortFields = ["created_at", "first_name", "last_name", "email", "role", "is_verified"];
+		const allowedOrders = ["ASC", "DESC"];
+
+		if (!allowedSortFields.includes(sortBy)) {
+			throw new APIError("Invalid sort field", 400);
+		}
+		if (!allowedOrders.includes(order.toUpperCase())) {
+			throw new APIError("Invalid sort order", 400);
+		}
+
+		// Get total count for pagination
+		const countQuery = `
+            SELECT COUNT(*)
+            FROM users
+            ${whereStatement}
+        `;
+		const totalCount = await pool.query(countQuery, params);
+
+		// Clone params array for the main query
+		const queryParams = [...params];
+		queryParams.push(limit, offset);
+
+		// Get users with pagination
+		const query = `
+            SELECT 
+                id,
+                first_name,
+                last_name,
+                email,
+                phone_number,
+                role,
+                is_verified,
+                created_at,
+                updated_at,
+                (
+                    SELECT json_build_object(
+                        'id', s.id,
+                        'shop_name', s.shop_name,
+                        'status', s.status,
+                        'rating', s.rating
+                    )
+                    FROM sellers s
+                    WHERE s.user_id = users.id
+                ) as seller_info,
+                (
+                    SELECT COUNT(*)
+                    FROM orders o
+                    WHERE o.user_id = users.id
+                ) as total_orders
+            FROM users
+            ${whereStatement}
+            ORDER BY ${sortBy} ${order}
+            LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+        `;
+
+		const result = await pool.query(query, queryParams);
+
+		res.json({
+			success: true,
+			data: {
+				users: result.rows,
+				pagination: {
+					total: parseInt(totalCount.rows[0].count),
+					totalPages: Math.ceil(totalCount.rows[0].count / limit),
+					limit: parseInt(limit),
+				},
+			},
+		});
+	} catch (error) {
+		next(error);
+	}
+};
