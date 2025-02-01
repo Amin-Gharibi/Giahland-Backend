@@ -619,7 +619,22 @@ exports.getNewArrivals = async (req, res, next) => {
 exports.getProductsByCategory = async (req, res, next) => {
 	try {
 		const { categoryId } = req.params;
+		const { limit = 10, offset = 0, sortBy = "created_at", order = "DESC" } = req.query;
 
+		const params = [categoryId, limit, offset];
+
+		// Validate sortBy to prevent SQL injection
+		const allowedSortFields = ["created_at", "price", "name", "updated_at"];
+		const allowedOrders = ["ASC", "DESC"];
+
+		if (!allowedSortFields.includes(sortBy)) {
+			throw new APIError("Invalid sort field", 400);
+		}
+		if (!allowedOrders.includes(order.toUpperCase())) {
+			throw new APIError("Invalid sort order", 400);
+		}
+
+		// Query to fetch products with pagination and sorting
 		const result = await pool.query(
 			`
             SELECT 
@@ -676,13 +691,41 @@ exports.getProductsByCategory = async (req, res, next) => {
             )
             AND p.status = 'active'
             GROUP BY p.id, s.shop_name, s.rating
-            ORDER BY p.created_at DESC`,
+            ORDER BY p.${sortBy} ${order}
+            LIMIT $2 OFFSET $3
+        `,
+			params
+		);
+
+		// Query to get the total product count for pagination
+		const countResult = await pool.query(
+			`
+            SELECT COUNT(*) as total
+            FROM products p
+            WHERE p.id IN (
+                SELECT product_id 
+                FROM product_categories pc
+                JOIN categories c ON pc.category_id = c.id
+                WHERE c.id::TEXT = $1 OR c.en_name = $1
+            )
+            AND p.status = 'active'
+            `,
 			[categoryId]
 		);
 
+		const total = parseInt(countResult.rows[0].total, 10);
+
 		res.json({
 			success: true,
-			data: result.rows,
+			data: {
+				products: result.rows,
+				pagination: {
+					total,
+					totalPages: Math.ceil(total / limit),
+					limit: parseInt(limit, 10),
+					offset: parseInt(offset, 10),
+				},
+			},
 		});
 	} catch (error) {
 		next(error);

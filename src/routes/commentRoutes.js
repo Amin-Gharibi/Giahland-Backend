@@ -6,7 +6,7 @@ const validateRequest = require("../middlewares/validateRequest");
 const commentSchemas = require("../validators/commentSchemas");
 
 // Public routes
-router.get("/:parentType/:parentId", validateRequest(commentSchemas.getComments), commentController.getComments);
+router.get("/:parentType/:parentId", commentController.getComments);
 
 // Protected routes
 router.use(protect);
