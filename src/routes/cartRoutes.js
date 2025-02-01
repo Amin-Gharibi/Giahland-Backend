@@ -12,5 +12,6 @@ router.post("/items", validateRequest(cartSchemas.addItem), cartController.addIt
 router.put("/items/:id", validateRequest(cartSchemas.updateItem), cartController.updateItem);
 router.delete("/items/:id", cartController.removeItem);
 router.delete("/", cartController.clearCart);
+router.get("/check/:productId", cartController.checkProductInCart);
 
 module.exports = router;

@@ -92,7 +92,7 @@ CREATE TABLE cart_items (
     cart_id uuid REFERENCES carts(id) ON DELETE CASCADE,
     product_id uuid REFERENCES products(id) ON DELETE CASCADE,
     quantity INTEGER NOT NULL DEFAULT 1,
-    price DECIMAL(12,2) NOT NULL,
+    price BIGINT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

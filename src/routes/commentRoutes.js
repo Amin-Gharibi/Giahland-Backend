@@ -5,17 +5,15 @@ const commentController = require("../controllers/commentController");
 const validateRequest = require("../middlewares/validateRequest");
 const commentSchemas = require("../validators/commentSchemas");
 
-// Public routes
-router.get("/:parentType/:parentId", commentController.getComments);
-
-// Protected routes
-router.use(protect);
-
 // User routes
-router.post("/:parentType/:parentId", validateRequest(commentSchemas.createComment), commentController.createComment);
-router.delete("/:id", commentController.deleteComment);
+router.delete("/:id", protect, commentController.deleteComment);
 
 // Admin routes
-router.put("/:id/status", authorize("admin"), validateRequest(commentSchemas.updateStatus), commentController.updateCommentStatus);
+router.get("/admin/all", protect, authorize("admin"), commentController.getAllCommentsForAdmin);
+router.put("/:id/status", protect, authorize("admin"), validateRequest(commentSchemas.updateStatus), commentController.updateCommentStatus);
+
+// Public routes
+router.get("/:parentType/:parentId", commentController.getComments);
+router.post("/:parentType/:parentId", protect, validateRequest(commentSchemas.createComment), commentController.createComment);
 
 module.exports = router;
