@@ -15,17 +15,31 @@ exports.getCart = async (req, res, next) => {
 
 		const cartId = cartResult.rows[0].id;
 
+		// First, get all unique sellers for this cart
+		const sellersQuery = `
+            SELECT DISTINCT s.shop_name
+            FROM cart_items ci
+            JOIN products p ON ci.product_id = p.id
+            JOIN sellers s ON p.seller_id = s.id
+            WHERE ci.cart_id = $1
+            ORDER BY s.shop_name
+        `;
+
+		const sellersResult = await pool.query(sellersQuery, [cartId]);
+		const sellers = sellersResult.rows.map((row) => row.shop_name);
+
 		// Get cart items with product details
-		const query = `
+		const itemsQuery = `
             SELECT 
                 ci.id,
                 ci.quantity,
-                ci.price as cart_price,
+                ci.price as price_per_item,
                 p.id as product_id,
                 p.name as product_name,
                 p.description as product_description,
-                p.price as current_price,
                 p.stock as available_stock,
+                p.status as product_status,
+                s.shop_name as seller_name,
                 (
                     SELECT json_build_object(
                         'id', pi.id,
@@ -38,25 +52,41 @@ exports.getCart = async (req, res, next) => {
                 ) as main_image
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
+            JOIN sellers s ON p.seller_id = s.id
             WHERE ci.cart_id = $1
             ORDER BY ci.created_at DESC
         `;
 
-		const result = await pool.query(query, [cartId]);
+		const result = await pool.query(itemsQuery, [cartId]);
 
-		// Calculate cart totals
-		const items = result.rows;
-		const total = items.reduce((sum, item) => sum + item.cart_price * item.quantity, 0);
+		// Process items
+		const items = result.rows.map((item) => ({
+			id: item.id,
+			productId: item.product_id,
+			productName: item.product_name,
+			description: item.product_description,
+			quantity: item.quantity,
+			pricePerItem: item.price_per_item,
+			totalPrice: item.price_per_item * item.quantity,
+			sellerName: item.seller_name,
+			stock: item.available_stock,
+			status: item.product_status,
+			mainImage: item.main_image?.image_url || null,
+		}));
+
+		// Calculate totals
 		const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+		const totalPrice = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
 		res.json({
 			success: true,
 			data: {
 				cartId: cartId,
+				sellers: sellers,
 				items: items,
 				summary: {
 					totalItems: totalItems,
-					totalPrice: Number(total.toFixed(2)),
+					totalPrice: totalPrice,
 				},
 			},
 		});
