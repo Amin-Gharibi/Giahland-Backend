@@ -52,7 +52,7 @@ CREATE TABLE products (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     seller_id uuid REFERENCES sellers(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    price DECIMAL(12,2) NOT NULL,
+    price BIGINT NOT NULL,
     description TEXT,
     stock INTEGER NOT NULL DEFAULT 0,
     status product_status DEFAULT 'active',

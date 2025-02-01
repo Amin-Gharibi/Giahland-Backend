@@ -17,7 +17,7 @@ router.get("/category/:categoryId", productController.getProductsByCategory);
 
 // Protected seller routes
 router.use(protect);
-router.use(authorize("seller"));
+router.use(authorize("seller", "admin"));
 
 router.post("/", validateRequest(productSchemas.create), productController.createProduct);
 router.put("/:id", validateRequest(productSchemas.update), productController.updateProduct);

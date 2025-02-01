@@ -5,7 +5,7 @@ const path = require("path");
 
 exports.getProducts = async (req, res, next) => {
 	try {
-		const { limit = 10, offset = 0, category, minPrice, maxPrice, sortBy = "created_at", order = "DESC" } = req.query;
+		const { limit = 10, offset = 0, category, minPrice, maxPrice, sortBy = "created_at", order = "DESC", q } = req.query;
 
 		const params = [];
 		let whereClause = "WHERE p.status = $1";
@@ -28,6 +28,12 @@ exports.getProducts = async (req, res, next) => {
 		if (maxPrice !== undefined) {
 			params.push(maxPrice);
 			whereClause += ` AND p.price <= $${params.length}`;
+		}
+
+		// Add search query filter
+		if (q) {
+			params.push(`%${q}%`);
+			whereClause += ` AND (p.name ILIKE $${params.length} OR p.description ILIKE $${params.length})`;
 		}
 
 		// Validate sortBy to prevent SQL injection
@@ -291,7 +297,7 @@ exports.updateProduct = async (req, res, next) => {
 			[req.params.id, req.user.id]
 		);
 
-		if (productCheck.rows.length === 0) {
+		if (productCheck.rows.length === 0 && req.user.role !== "admin") {
 			throw new APIError("Product not found or you don't have permission to update it", 404);
 		}
 
@@ -664,8 +670,9 @@ exports.getProductsByCategory = async (req, res, next) => {
             LEFT JOIN sellers s ON p.seller_id = s.id
             WHERE p.id IN (
                 SELECT product_id 
-                FROM product_categories 
-                WHERE category_id = $1
+                FROM product_categories pc
+                JOIN categories c ON pc.category_id = c.id
+                WHERE c.id::TEXT = $1 OR c.en_name = $1
             )
             AND p.status = 'active'
             GROUP BY p.id, s.shop_name, s.rating
