@@ -5,22 +5,36 @@ const path = require("path");
 
 exports.getProducts = async (req, res, next) => {
 	try {
-		const { limit = 10, offset = 0, category, minPrice, maxPrice, sortBy = "created_at", order = "DESC", q } = req.query;
+		const { limit = 30, offset = 0, categories, minPrice, maxPrice, sortBy = "created_at", order = "DESC", q } = req.query;
 
 		const params = [];
 		let whereClause = "WHERE p.status = $1";
 		params.push("active");
 
-		// Add category filter
-		if (category) {
-			params.push(category);
-			whereClause += ` AND EXISTS (
-                SELECT 1 FROM product_categories pc 
-                WHERE pc.product_id = p.id AND pc.category_id = $${params.length}
-            )`;
+		// Handle multiple categories
+		if (categories) {
+			// Split the comma-separated categories and filter out any empty values
+			const categoryArray = categories
+				.split(",")
+				.map((cat) => cat.trim())
+				.filter((cat) => cat);
+
+			if (categoryArray.length > 0) {
+				// Create placeholders for parameterized query
+				const categoryPlaceholders = categoryArray.map((_, idx) => `$${params.length + idx + 1}`).join(",");
+
+				whereClause += ` AND p.id IN (
+                    SELECT pc.product_id
+                    FROM product_categories pc
+                    WHERE pc.category_id IN (${categoryPlaceholders})
+                    GROUP BY pc.product_id
+                    HAVING COUNT(DISTINCT pc.category_id) = ${categoryArray.length}
+                )`;
+
+				params.push(...categoryArray);
+			}
 		}
 
-		// Add price range filter
 		if (minPrice !== undefined) {
 			params.push(minPrice);
 			whereClause += ` AND p.price >= $${params.length}`;
@@ -29,14 +43,11 @@ exports.getProducts = async (req, res, next) => {
 			params.push(maxPrice);
 			whereClause += ` AND p.price <= $${params.length}`;
 		}
-
-		// Add search query filter
 		if (q) {
 			params.push(`%${q}%`);
 			whereClause += ` AND (p.name ILIKE $${params.length} OR p.description ILIKE $${params.length})`;
 		}
 
-		// Validate sortBy to prevent SQL injection
 		const allowedSortFields = ["created_at", "price", "name"];
 		const allowedOrders = ["ASC", "DESC"];
 
@@ -120,6 +131,7 @@ exports.getProducts = async (req, res, next) => {
 					total: parseInt(totalCount.rows[0].count),
 					totalPages: Math.ceil(totalCount.rows[0].count / limit),
 					limit: parseInt(limit),
+					offset: parseInt(offset),
 				},
 			},
 		});
