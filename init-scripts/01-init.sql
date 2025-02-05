@@ -20,7 +20,7 @@ CREATE TABLE users (
     home_phone_number VARCHAR(20),
     password_hash VARCHAR(255) NOT NULL,
     role user_role NOT NULL DEFAULT 'customer',
-    profile_image_url TEXT,
+    profile_image_url TEXT DEFAULT '/uploads/default-avatar.png' NOT NULL,
     is_verified BOOLEAN DEFAULT false,
     verified_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -101,9 +101,10 @@ CREATE TABLE blogs (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     author_id uuid REFERENCES users(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
-    en_title VARCHAR(255) NOT NULL,
+    en_title VARCHAR(255) NOT NULL UNIQUE,
     content TEXT NOT NULL,
     views INTEGER DEFAULT 0,
+    image_url TEXT DEFAULT '/uploads/default-blog-banner.png' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
